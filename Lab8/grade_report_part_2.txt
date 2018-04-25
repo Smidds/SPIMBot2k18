@@ -1,0 +1,46 @@
+Grades for version committed on time
+	flood fill: 30.0 / 30
+			*Passed test: basic
+			*Passed test: basic (evil)
+			*Passed test: base_case
+			*Passed test: base_case (evil)
+			*Passed test: checkers
+			*Passed test: checkers (evil)
+			*Passed test: quadrants
+			*Passed test: quadrants (evil)
+			*Passed test: empty
+			*Passed test: empty (evil)
+			*Passed test: maze
+			*Passed test: maze (evil)
+		
+	count disjoint regions step: 30.0 / 30
+			*Passed test: basic
+			*Passed test: basic (evil)
+			*Passed test: base_case
+			*Passed test: base_case (evil)
+			*Passed test: checkers
+			*Passed test: checkers (evil)
+			*Passed test: quadrants
+			*Passed test: quadrants (evil)
+			*Passed test: empty
+			*Passed test: empty (evil)
+			*Passed test: maze
+			*Passed test: maze (evil)
+		
+	count disjoint regions: 20.0 / 20
+			*Passed test: basic
+			*Passed test: basic (evil)
+			*Passed test: base_case
+			*Passed test: base_case (evil)
+			*Passed test: checkers
+			*Passed test: checkers (evil)
+			*Passed test: quadrants
+			*Passed test: quadrants (evil)
+			*Passed test: empty
+			*Passed test: empty (evil)
+			*Passed test: maze
+			*Passed test: maze (evil)
+		
+Total: 80.0 / 80
+
+Final Score: 80.0 / 80

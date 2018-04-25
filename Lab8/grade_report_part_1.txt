@@ -1,0 +1,18 @@
+Grades for version committed on time
+	draw_line: 20.0 / 20
+			*Passed test: given
+			*Passed test: given (evil)
+			*Passed test: draw_line(0, 0, &canvas)
+			*Passed test: draw_line(0, 0, &canvas) (evil)
+			*Passed test: draw_line(0, 4, &canvas)
+			*Passed test: draw_line(0, 4, &canvas) (evil)
+			*Passed test: draw_line(4, 24, &canvas)
+			*Passed test: draw_line(4, 24, &canvas) (evil)
+			*Passed test: empty canvas
+			*Passed test: empty canvas (evil)
+			*Passed test: big canvas
+			*Passed test: big canvas (evil)
+		
+Total: 20.0 / 20
+
+Final Score: 20.0 / 20
