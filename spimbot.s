@@ -139,7 +139,8 @@ main:
 		sw         $s1, 4($sp)         				#
 		sw         $s2, 8($sp)         				#
 		sw         $s3, 12($sp)        				#
-		sw         $ra, 16($sp)        		
+		sw         $ra, 16($sp)
+		        		
 		jal        findNearest         				# findNearest
 		move       $s2, $v0            				# $a0 = $v
 		lw         $s0, GET_CARGO       			# $s0 = cargo_amount
@@ -162,12 +163,12 @@ main:
 		mtc0      $s0, $12
 	
 	end:
-		add        $sp, $sp, 20
 		lw         $s0, 0($sp)
 		lw         $s1, 4($sp)
 		lw         $s2, 8($sp)
 		lw         $s3, 12($sp)
 		lw         $ra, 16($sp)
+		add        $sp, $sp, 20
 		# note that we infinite loop to avoid stopping the simulation early
 		j       main
 
