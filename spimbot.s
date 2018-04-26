@@ -84,7 +84,7 @@ main:
 		##############################
   
 		j 		main
-	 else1:
+	else1:
 	 	la 		$t0, station_up
 	 	lb 		$t0, 0($t0)
 	 	bne 	$t0, 1, leo_body				# Check if station is up
