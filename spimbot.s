@@ -95,7 +95,7 @@ main:
 	 	##  Chase the station here   #
 	 	##############################
 
-  	jal 	chase_station_extract
+  		jal 	chase_station_extract
 		sw    $0, station_up
 	 	j			main
 
@@ -132,6 +132,56 @@ main:
 	else5:
 		lw 		$t0, OTHER_BOT_X
 		slt 	$t0, 70
+<<<<<<< HEAD
+		bne 	$t0, 1, else5				# Check if the other bot is low enough to screw with them.
+
+		# move 	$a0, 1
+		# jal 	solvePuzzle
+
+		# j		main
+
+leo_body:
+    sub        $sp, $sp, 20        				# get some space
+    sw         $s0, 0($sp)         				#
+    sw         $s1, 4($sp)         				#
+    sw         $s2, 8($sp)         				#
+    sw         $s3, 12($sp)        				#
+    sw         $ra, 16($sp)        				#
+
+    jal        findNearest         				# findNearest
+    move       $s2, $v0            				# $a0 = $v0
+
+    lw         $s0, GET_CARGO       			# $s0 = cargo_amount
+    add        $s0, $s0, $v1        			# $s0 = cargo_amount + best_points
+    li         $s1, 126             			# $s1 = 126
+    bge        $s0, $s1, enable_int 			# if $s0 >= $s1 then enable_int
+    li         $s0, 0               			# $s0 = 0
+    mtc0       $s0, $12             			# disable to global interrupt signals
+
+    move       $a0, $s2             			# $a0 = $s0
+    jal        chase                  			# chase
+    sw         $s0, COLLECT_ASTEROID
+
+
+    j          end                    			# jump to end
+
+enable_int:
+    li        $s0, STATION_EXIT_INT_MASK        # $s0 = STATION_EXIT_INT_MASK
+    or        $s0, $s0, STATION_ENTER_INT_MASK  # $s0 += STATION_ENTER_INT_MASK
+    or        $s0, $s0, BONK_INT_MASK
+    or        $s0, $s0, 1
+    mtc0      $s0, $12
+
+end:
+    add        $sp, $sp, 20
+    lw         $s0, 0($sp)
+    lw         $s1, 4($sp)
+    lw         $s2, 8($sp)
+    lw         $s3, 12($sp)
+    lw         $ra, 16($sp)
+    # note that we infinite loop to avoid stopping the simulation early
+    j       main
+=======
 		bne 	$t0, 1, else_done					# Check if the other bot is low enough to screw with them.
 	else_done:
 		sub        $sp, $sp, 20        				# get some space
@@ -171,6 +221,7 @@ main:
 		add        $sp, $sp, 20
 		# note that we infinite loop to avoid stopping the simulation early
 		j       main
+>>>>>>> b1206621ef93d1ed9cf201a89c8eda51883e035d
 
   #-------------------- chase function and standby function --------------------#
 
