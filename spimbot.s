@@ -55,22 +55,21 @@ BOT_FREEZE_INT_MASK         = 0x4000
 BOT_FREEZE_ACK              = 0xffff00e4
 
 ## Global Constants
-LOW_ALT_WARN				= 50
-SAFE_ALT					= 90
-LOW_ENERGY_WARN				= 200
-WAIT_STATION_X				= 100
-WAIT_STATION_Y				= 100
+LOW_ALT_WARN			= 50
+SAFE_ALT			= 90
+LOW_ENERGY_WARN			= 200
+WAIT_STATION_X		        = 100
+WAIT_STATION_Y			= 100
 
 # put your data things here
 .data
 .align 2
-	asteroid_map_address: 		.space 	1024
+	asteroid_map_address: 	.space 	1024
 	puzzle_data:		.space 	336			## Looks like Puzzle is this big
 	puzzle_solution:	.space	8
 	station_up:   		.space 	1
 	station_down: 		.space 	1
-#	station_down: 		.space 	1
-	isFrozen:			.space 	1
+	isFrozen:		.space 	1
 	puzzleReady:		.space 	1
 
 .text
@@ -137,29 +136,29 @@ main:
 #		j		main
 
   leo_body:
-    sub        $sp, $sp, 20        # get some space
-    sw         $s0, 0($sp)         #
-    sw         $s1, 4($sp)         #
-    sw         $s2, 8($sp)         #
-    sw         $s3, 12($sp)        #
-    sw         $ra, 16($sp)        #
+    sub        $sp, $sp, 20        				# get some space
+    sw         $s0, 0($sp)         				#
+    sw         $s1, 4($sp)         				#
+    sw         $s2, 8($sp)         				#
+    sw         $s3, 12($sp)        				#
+    sw         $ra, 16($sp)        				#
 
-    jal        findNearest         # findNearest
-    move       $s2, $v0            # $a0 = $v0
+    jal        findNearest         				# findNearest
+    move       $s2, $v0            				# $a0 = $v0
 
-    lw         $s0, GET_CARGO       # $s0 = cargo_amount
-    add        $s0, $s0, $v1        # $s0 = cargo_amount + best_points
-    li         $s1, 126             # $s1 = 126
-    bge        $s0, $s1, enable_int # if $s0 >= $s1 then enable_int
-    li         $s0, 0               # $s0 = 0
-    mtc0       $s0, $12             # disable to global interrupt signals
+    lw         $s0, GET_CARGO       			# $s0 = cargo_amount
+    add        $s0, $s0, $v1        			# $s0 = cargo_amount + best_points
+    li         $s1, 126             			# $s1 = 126
+    bge        $s0, $s1, enable_int 			# if $s0 >= $s1 then enable_int
+    li         $s0, 0               			# $s0 = 0
+    mtc0       $s0, $12             			# disable to global interrupt signals
 
-    move       $a0, $s2             # $a0 = $s0
-    jal        chase                  # chase
-    sw         $s0, COLLECT_ASTEROID  #
+    move       $a0, $s2             			# $a0 = $s0
+    jal        chase                  			# chase
+    sw         $s0, COLLECT_ASTEROID  
 
 
-    j          end                    # jump to end
+    j          end                    			# jump to end
 
 enable_int:
     li        $s0, STATION_EXIT_INT_MASK        # $s0 = STATION_EXIT_INT_MASK
@@ -169,133 +168,133 @@ enable_int:
     mtc0      $s0, $12
 
 end:
-    add        $sp, $sp, 20        # restore
-    lw         $s0, 0($sp)         #
-    lw         $s1, 4($sp)         #
-    lw         $s2, 8($sp)         #
-    lw         $s3, 12($sp)        #
-    lw         $ra, 16($sp)        #
+    add        $sp, $sp, 20        
+    lw         $s0, 0($sp)         
+    lw         $s1, 4($sp)         
+    lw         $s2, 8($sp)         
+    lw         $s3, 12($sp)        
+    lw         $ra, 16($sp)        
     # note that we infinite loop to avoid stopping the simulation early
     j       main
 
   #-------------------- chase function and standby function --------------------#
 
 chase:
-    li        $t0, 10        # $t0 = 10
-    sw        $t0, VELOCITY  # $a0 should be the address to chase
-    move            $t0, $a0        # $t0 = $a0
+    li        $t0, 10        					# $t0 = 10
+    sw        $t0, VELOCITY  					# $a0 should be the address to chase
+    move            $t0, $a0        			# $t0 = $a0
 
 c_getToX:
-    lw         $t1, BOT_X                     # get the BOT_X
-    srl        $t2, $t0, 16                   # $t2 = asteroid.x
+    lw         $t1, BOT_X                     	# get the BOT_X
+    srl        $t2, $t0, 16                   	# $t2 = asteroid.x
     beq        $t1, $t2, c_getToY               # if BOT_X == asteroid.x then getToY
     blt        $t1, $t2, c_right                # if BOT_X < asteroid.x then right
 
-    li         $t3, 180                       # $t3 = degrees = 180
-    sw         $t3, ANGLE                     # set ANGLE
-    li         $t3, 1                         # $t3 = ANGLE_CONTROL = 1
-    sw         $t3, ANGLE_CONTROL             # set ANGLE_CONTROL
+    li         $t3, 180                       	# $t3 = degrees = 180
+    sw         $t3, ANGLE                     	# set ANGLE
+    li         $t3, 1                         	# $t3 = ANGLE_CONTROL = 1
+    sw         $t3, ANGLE_CONTROL             	# set ANGLE_CONTROL
 
     j          c_getToX                         # jump to getToX
 
 c_right:
-    li         $t3, 0                         # $t3 = 0
-    sw         $t3, ANGLE                     # set ANGLE
-    li         $t3, 1                         # $t3 = 1
-    sw         $t3, ANGLE_CONTROL             # set ANGLE_CONTROL
+    li         $t3, 0                         	# $t3 = 0
+    sw         $t3, ANGLE                     	# set ANGLE
+    li         $t3, 1                         	# $t3 = 1
+    sw         $t3, ANGLE_CONTROL             	# set ANGLE_CONTROL
 
     j          c_getToX                         # jump to getToX
 
 c_getToY:
-    lw         $t1, BOT_Y                     # get the BOT_Y
-    and        $t2, $t0, 0x0000ffff           # $t2 = asteroid.y
+    lw         $t1, BOT_Y                     	# get the BOT_Y
+    and        $t2, $t0, 0x0000ffff           	# $t2 = asteroid.y
     beq        $t1, $t2, c_adjust_x             # if BOT_Y == asteroid.y then adjust_x
     blt        $t1, $t2, c_down                 # if BOT_Y < asteroid.y then down
 
-    li         $t3, 270                       # $t3 = 270
-    sw         $t3, ANGLE                     # set ANGLE
-    li         $t3, 1                         # $t3 = 1
-    sw         $t3, ANGLE_CONTROL             # set ANGLE_CONTROL
+    li         $t3, 270                       	# $t3 = 270
+    sw         $t3, ANGLE                     	# set ANGLE
+    li         $t3, 1                         	# $t3 = 1
+    sw         $t3, ANGLE_CONTROL             	# set ANGLE_CONTROL
 
     j          c_getToX                         # jump to getToY
 
 c_down:
-    li         $t3, 90                        # $t3 = 90
-    sw         $t3, ANGLE                     # set ANGLE
-    li         $t3, 1                         # $t3 = 1
-    sw         $t3, ANGLE_CONTROL             # set ANGLE_CONTROL
+    li         $t3, 90                        	# $t3 = 90
+    sw         $t3, ANGLE                     	# set ANGLE
+    li         $t3, 1                         	# $t3 = 1
+    sw         $t3, ANGLE_CONTROL             	# set ANGLE_CONTROL
 
     j          c_getToX                         # jump to getToY
 
 c_adjust_x:
-    lw         $t1, BOT_X                     # get the BOT_X
-    srl        $t2, $t0, 16                   # $t2 = asteroid.x
+    lw         $t1, BOT_X                     	# get the BOT_X
+    srl        $t2, $t0, 16                   	# $t2 = asteroid.x
     beq        $t1, $t2, c_end                  # if BOT_X == asteroid.x then getToY
     blt        $t1, $t2, c_adjust_x_right       # if BOT_X < asteroid.x then right
 
-    li         $t3, 180                       # $t3 = degrees = 180
-    sw         $t3, ANGLE                     # set ANGLE
-    li         $t3, 1                         # $t3 = ANGLE_CONTROL = 1
-    sw         $t3, ANGLE_CONTROL             # set ANGLE_CONTROL
+    li         $t3, 180                       	# $t3 = degrees = 180
+    sw         $t3, ANGLE                     	# set ANGLE
+    li         $t3, 1                         	# $t3 = ANGLE_CONTROL = 1
+    sw         $t3, ANGLE_CONTROL             	# set ANGLE_CONTROL
 
     j          c_adjust_x                       # jump to adjust_x
 
 c_adjust_x_right:
-    li         $t3, 0                         # $t3 = 0
-    sw         $t3, ANGLE                     # set ANGLE
-    li         $t3, 1                         # $t3 = 1
-    sw         $t3, ANGLE_CONTROL             # set ANGLE_CONTROL
+    li         $t3, 0                         	# $t3 = 0
+    sw         $t3, ANGLE                     	# set ANGLE
+    li         $t3, 1                         	# $t3 = 1
+    sw         $t3, ANGLE_CONTROL             	# set ANGLE_CONTROL
 
     j          c_adjust_x                       # jump to adjust_x
 
 c_end:
-    jr          $ra                           # return
+    jr          $ra                           	# return
 
 
 
 ## finding the largest ones; we're probably not using this
-findFav:                # after this call $v0 should contain the (x, y), other $t is free to use
-    li         $t0, 0                         # $t0 = (x, y) = 0
-    li         $t4, 0                         # $t4 = best_points = 0
+findFav:                						# after this call $v0 should contain the (x, y), other $t is free to use
+    li         $t0, 0                         	# $t0 = (x, y) = 0
+    li         $t4, 0                         	# $t4 = best_points = 0
 
-    li         $t5, 0                         # $t5 = i = 0
+    li         $t5, 0                         	# $t5 = i = 0
 
 for_loop:
-    la         $t2, asteroid_map_address      # $t2 = asteroid_map_address
-    sw         $t2, ASTEROID_MAP              # $t2 should be the address of current asteroid map
-    lw         $t3, 0($t2)                    # $t3 = length
-    add        $t6, $t2, 4                    # $t6 should be the start of asteroid array
-    bge        $t5, $t3, end_findFav        # if i >= length then getToX, because we should have the best
-                                            # target now stored in $v0
+    la         $t2, asteroid_map_address      	# $t2 = asteroid_map_address
+    sw         $t2, ASTEROID_MAP              	# $t2 should be the address of current asteroid map
+    lw         $t3, 0($t2)                    	# $t3 = length
+    add        $t6, $t2, 4                    	# $t6 should be the start of asteroid array
+    bge        $t5, $t3, end_findFav        	# if i >= length then getToX, because we should have the best
+                                            	# target now stored in $v0
 
-    mul        $t7, $t5, 8                    # $t7 = i * 8
-    add        $t7, $t7, $t6                  # $t7 = &asteroid[i]
-    lw         $t8, 4($t7)                    # $t8 = asteroid[i].points
+    mul        $t7, $t5, 8                    	# $t7 = i * 8
+    add        $t7, $t7, $t6                  	# $t7 = &asteroid[i]
+    lw         $t8, 4($t7)                    	# $t8 = asteroid[i].points
 
-    ble        $t8, $t4, looping              # if asteroid[i].points <= best_points then looping
+    ble        $t8, $t4, looping              	# if asteroid[i].points <= best_points then looping
 
-    lw         $t9, 0($t7)                    # $t9 = asteroid[i].(x, y)
-    srl        $t9, $t9, 8                    # $t9 = asteroid[i].x
-    li         $t1, 40                        # $t1 = 40
-    ble        $t9, $t1, looping              # if asteroid[i].x <= 40 then looping
+    lw         $t9, 0($t7)                    	# $t9 = asteroid[i].(x, y)
+    srl        $t9, $t9, 8                    	# $t9 = asteroid[i].x
+    li         $t1, 40                        	# $t1 = 40
+    ble        $t9, $t1, looping              	# if asteroid[i].x <= 40 then looping
     # else set the current asteroid as the fav
-    lw         $t4, 4($t7)                    # $t4 = best_points = asteroid[i].points
-    lw         $t0, 0($t7)                    # $t0 = asteroid[i].(x, y)
-    move       $v0, $t0                       # $v0 = $t0 = (x, y) of fav asteroid
-    move       $v1, $t4                       # $v1 = $t4 = best_points
+    lw         $t4, 4($t7)                    	# $t4 = best_points = asteroid[i].points
+    lw         $t0, 0($t7)                    	# $t0 = asteroid[i].(x, y)
+    move       $v0, $t0                       	# $v0 = $t0 = (x, y) of fav asteroid
+    move       $v1, $t4                       	# $v1 = $t4 = best_points
 
 looping:
-    add        $t5, $t5, 1                    # i++
-    j          for_loop                       # loop
+    add        $t5, $t5, 1                    	# i++
+    j          for_loop     					# loop
 
 end_findFav:
-    jr         $ra                            # return
+    jr         $ra                           	# return
 
 
 ## we're finding nearest
 findNearest:
-    li          $t0, 0        # $t0 = 0
-    mtc0        $t0, $12        # disable interrupt for now
+    li          $t0, 0        					# $t0 = 0
+    mtc0        $t0, $12        				# disable interrupt for now
 
     la          $t0, asteroid_map_address       # $t0 contains the asteroidMap
     sw          $t0, ASTEROID_MAP               #
@@ -332,18 +331,18 @@ FN_loop:
     lw          $v1, 4($t7)                     # $v1 = best_points
 
 after_if:
-    add         $t5, $t5, 1                     # i++
-    j           FN_loop                         # jump to FN_loop
+    add         $t5, $t5, 1						# i++
+    j           FN_loop    						# jump to FN_loop
 
 FN_end:
-    move        $v0, $t3                        # $v0 = $t3
+    move        $v0, $t3						# $v0 = $t3
     #
-    # li          $t0, STATION_EXIT_INT_MASK        # $s0 = STATION_EXIT_INT_MASK
+    # li          $t0, STATION_EXIT_INT_MASK	# $s0 = STATION_EXIT_INT_MASK
     # or          $t0, $t0, BONK_INT_MASK
     # or          $t0, $t0, 1
     # mtc0        $t0, $12
 
-    jr          $ra                             # return
+    jr          $ra 							# return
 
 
 
@@ -356,25 +355,25 @@ FN_end:
 #                                               #
 #################################################
 solvePuzzle:
-        sub		$sp, $sp, 8					# Sub off our stack here as we handle stuff
-		sw 		$ra, 0($sp) 				# Protect the $ra
-		sw 		$t0, 4($sp) 				# Protect the $t0
+        sub		$sp, $sp, 8						# Sub off our stack here as we handle stuff
+		sw 		$ra, 0($sp) 					# Protect the $ra
+		sw 		$t0, 4($sp) 					# Protect the $t0
 
 		#############################
 		##  Solve the puzzle here   #
 		#############################
 
-		beq 	$a0, $0, puzzle_continue	# If $a0 = 0 skip setting the throw bit
+		beq 	$a0, $0, puzzle_continue		# If $a0 = 0 skip setting the throw bit
 		sw 		$a1, THROW_PUZZLE
 	puzzle_continue:
 		la 		$t0, puzzle_solution
 		lw 		$t0, 4($t0)
 		sw 		$t0, SUBMIT_SOLUTION
-		sw 		$0, puzzle_solution			# Zero out our puzzle_solution struct
+		sw 		$0, puzzle_solution				# Zero out our puzzle_solution struct
 
-		lw 		$ra, 0($sp) 				# Restore the $ra
-		lw 		$t0, 4($sp) 				# Restore the $t0
-		add		$sp, $sp, 8					# Sub off our stack here as we handle stuff
+		lw 		$ra, 0($sp) 					# Restore the $ra
+		lw 		$t0, 4($sp) 					# Restore the $t0
+		add		$sp, $sp, 8						# Sub off our stack here as we handle stuff
 		jr 		$ra
 
 
@@ -392,31 +391,31 @@ solvePuzzle:
 count_disjoint_regions:
 		sub  $sp, $sp, 20
 		sw   $ra, 0($sp)
-		sw   $s0, 4($sp)				# $a0
-		sw   $s1, 8($sp)				# $a1
-		sw   $s2, 12($sp)				# $a2
-		sw   $s3, 16($sp)				# $t0									// i
+		sw   $s0, 4($sp)						# $a0
+		sw   $s1, 8($sp)						# $a1
+		sw   $s2, 12($sp)						# $a2
+		sw   $s3, 16($sp)						# $t0									// i
 
 		move $s0, $a0
 		move $s1, $a1
 		move $s2, $a2
 
-        li   $t0, 0						# $t0 = 0 								// i
-	cdr_for_loop:
-		lw   $t1, 0($a0)				# $t1 = lines->num_lines
-		bge  $t0, $t1, cdr_done			# Exit if i >= lines->num_lines
+        li   $t0, 0								# $t0 = 0 								// i
+	cdr_for_loop:		
+		lw   $t1, 0($a0)						# $t1 = lines->num_lines
+		bge  $t0, $t1, cdr_done					# Exit if i >= lines->num_lines
 
-		mul  $t4, $t0, 4				# $t4 = actual "i" index
+		mul  $t4, $t0, 4						# $t4 = actual "i" index
 
-		lw   $t1, 4($a0)				# $t1 = &lines->coords[0]
+		lw   $t1, 4($a0)						# $t1 = &lines->coords[0]
 
-		add  $t2, $t4, $t1				# $t2 = &lines->coords[0][i]
-		lw   $t2, 0($t2)				# $t2 = lines->coords[0][i]				// start_pos
+		add  $t2, $t4, $t1						# $t2 = &lines->coords[0][i]
+		lw   $t2, 0($t2)						# $t2 = lines->coords[0][i]				// start_pos
 
-		lw   $t1, 8($a0)				# $t1 = &lines->coords[1]
+		lw   $t1, 8($a0)						# $t1 = &lines->coords[1]
 
-		add  $t3, $t4, $t1				# $t3 = &lines->coords[1][i]
-		lw   $t3, 0($t3)				# $t3 = lines->coords[1][i]				// end_pos
+		add  $t3, $t4, $t1						# $t3 = &lines->coords[1][i]
+		lw   $t3, 0($t3)						# $t3 = lines->coords[1][i]				// end_pos
 
 		move $s0, $a0
 		move $s1, $a1
@@ -431,9 +430,9 @@ count_disjoint_regions:
 
 		move $t0, $s3
 
-		li   $t1, 65					# $t1 = 'A'
-		rem  $t2, $t0, 2				# $t2 = i % 2
-		add  $t1, $t1, $t2				# $t1 = 'A' + (i % 2)
+		li   $t1, 65							# $t1 = 'A'
+		rem  $t2, $t0, 2						# $t2 = i % 2
+		add  $t1, $t1, $t2						# $t1 = 'A' + (i % 2)
 
 		move $a0, $t1
 		move $a1, $s1
@@ -445,12 +444,12 @@ count_disjoint_regions:
 		move $a2, $s2
 		move $t0, $s3
 
-		lw   $t1, 4($a2)				# $t1 = &solution->counts
-		mul  $t4, $t0, 4				# $t4 = actual "i" index
-		add  $t1, $t1, $t4				# $t1 = &solution->counts[i]
-		sw   $v0, 0($t1)				# solution->counts[i] = count;
+		lw   $t1, 4($a2)						# $t1 = &solution->counts
+		mul  $t4, $t0, 4						# $t4 = actual "i" index
+		add  $t1, $t1, $t4						# $t1 = &solution->counts[i]
+		sw   $v0, 0($t1)						# solution->counts[i] = count;
 
-		add $t0, $t0, 1					# $t0 = i++
+		add $t0, $t0, 1							# $t0 = i++
 		j   cdr_for_loop
 	cdr_done:
 		lw   $ra, 0($sp)
@@ -567,9 +566,9 @@ flood_fill:
         slt  $t0, $a1, 0                        # $t0 = col < 0
 		beq  $t0, 1, ff_end						# If col < 0 is true, exit
 		lw   $t0, 0($a3)						# $t0 = canvas->height
-		bge  $a0, $t0, ff_end						# If row >= canvas->height is false, exit
+		bge  $a0, $t0, ff_end					# If row >= canvas->height is false, exit
 		lw   $t0, 4($a3)						# $t0 = canvas->width
-		bge  $a1, $t0, ff_end						# If row >= canvas->width is false, exit
+		bge  $a1, $t0, ff_end					# If row >= canvas->width is false, exit
 	ff_false:
 		lw   $t0, 12($a3)						# $t0 = &(canvas->canvas)
 		mul  $t1, $a0, 4						# Get the true "row" index
@@ -580,11 +579,11 @@ flood_fill:
 		lb   $t1, 0($t0)						# $t1 = canvas->canvas[row][col] // $t1 = curr
 		lb 	 $t3, 8($a3)						# $t3 = canvas->marker
 
-		beq  $t1, $t3, ff_end						# If curr != canvas->pattern, bail
-		beq  $t1, $a2, ff_end						# If curr != marker, bail
+		beq  $t1, $t3, ff_end					# If curr != canvas->pattern, bail
+		beq  $t1, $a2, ff_end					# If curr != marker, bail
 
 		sub  $sp, $sp, 20						# Build that register, SON!
-    sw   $ra, 0($sp)                        # ... and store $ra while yer at it
+        sw   $ra, 0($sp)						# ... and store $ra while yer at it
 
 		sb   $a2, 0($t0)						# canvas->canvas[row][col] = marker
 
@@ -631,7 +630,7 @@ flood_fill:
 		lw   	$s3, 16($sp)
 
 		lw   	$ra, 0($sp)						# Restore $ra
-		add  	$sp, $sp, 20						# Tear down the stack!
+		add  	$sp, $sp, 20					# Tear down the stack!
 	ff_end:
         # Pray for me
         jr      $ra
@@ -692,20 +691,20 @@ unhandled_str:	.asciiz "Unhandled interrupt type\n"
 .ktext  0x80000180
 interrupt_handler:
 .set noat
-        move        $k1, $at             # save $at
-.set at
-        la          $k0, someSpace       #
-        sw          $a0, 0($k0)          # save $a0
-        sw          $a1, 4($k0)          # save $a1
+        move        $k1, $at             				# save $at
+.set at				
+        la          $k0, someSpace       				#
+        sw          $a0, 0($k0)          				# save $a0
+        sw          $a1, 4($k0)          				# save $a1
 
-        mfc0        $k0, $13             # get cause register
-        srl	        $a0, $k0, 2
-      	and	        $a0, $a0, 0xf		 # ExcCode field
+        mfc0        $k0, $13             				# get cause register
+        srl	        $a0, $k0, 2				
+      	and	        $a0, $a0, 0xf		 				# ExcCode field
       	bne	        $a0, 0, non_intrpt
 
-interrupt_dispatch:                      # interrupt dispatch center
-        mfc0        $k0, $13             # $k0 = cause register
-        beq         $k0, $zero, done     # if cause register == 0 then done
+interrupt_dispatch:                      				# interrupt dispatch center
+        mfc0        $k0, $13             				# $k0 = cause register
+        beq         $k0, $zero, done     				# if cause register == 0 then done
 
         and         $a0, $k0, STATION_EXIT_INT_MASK     # is there an exit interrupt?
         bne         $a0, $zero, exit_int                # if $a0 != $zero then exit_int
@@ -716,150 +715,150 @@ interrupt_dispatch:                      # interrupt dispatch center
         and         $a0, $k0, BONK_INT_MASK
         bne         $a0, $zero, bonk_interrupt          # if $a0 != $zero then bonk_interrupt
 
-        li	        $v0, PRINT_STRING	         # Unhandled interrupt types
+        li	        $v0, PRINT_STRING	         		# Unhandled interrupt types
     	  la	        $a0, unhandled_str
     	  syscall
-        j           done                 # jump to done
+        j           done                 				# jump to done
 
 exit_int:
-        sw          $a1, STATION_EXIT_ACK        # Ack it
-        # jal         standby                      # go to (200, 200)
+        sw          $a1, STATION_EXIT_ACK        		# Ack it
+        # jal         standby                      		# go to (200, 200)
 
-        j           interrupt_dispatch           # jump to interrupt_dispatch
+        j           interrupt_dispatch           		# jump to interrupt_dispatch
 
 enter_int:
-        sw          $a1, STATION_ENTER_ACK        # Ack it
+        sw          $a1, STATION_ENTER_ACK        		# Ack it
 
 chase_station:
-        li          $t0, 10               # $t0 = 10
-        sw          $t0, VELOCITY         #
+        li          $t0, 10               				# $t0 = 10
+        sw          $t0, VELOCITY         				#
 
-        lw          $t0, STATION_LOC        #
-        srl         $t1, $t0, 16            # $t1 = STATION_LOC.x
-        and         $t2, $t0, 0x0000ffff    # $t2 = STATION_LOC.y
-        lw          $t3, BOT_X              # $t3 = BOT_X
-        lw          $t4, BOT_Y              # $t4 = BOT_Y
+        lw          $t0, STATION_LOC        			#
+        srl         $t1, $t0, 16            			# $t1 = STATION_LOC.x
+        and         $t2, $t0, 0x0000ffff    			# $t2 = STATION_LOC.y
+        lw          $t3, BOT_X              			# $t3 = BOT_X
+        lw          $t4, BOT_Y              			# $t4 = BOT_Y
 
 
-        bne         $t1, $t3, goEW          # if station.x != bot.x then goEW
-        bne         $t2, $t4, goSN          # if station.y != bot.y then goSN
-        sw          $t0, DROPOFF_ASTEROIDS  # now the bot should overlap the station
-        j           cs_end                  # jump to cs_end
+        bne         $t1, $t3, goEW          			# if station.x != bot.x then goEW
+        bne         $t2, $t4, goSN          			# if station.y != bot.y then goSN
+        sw          $t0, DROPOFF_ASTEROID   			# now the bot should overlap the station
+        j           cs_end                  			# jump to cs_end
 
 goEW:
-        bgt        $t1, $t3, goEast        # if station.x > bot.x then goEast
-        # otherwise goWest
-        li        $t0, 180                 # $t0 = 180
-        sw        $t0, ANGLE               #
-        li        $t0, 1                   # $t0 = 1
-        sw        $t0, ANGLE_CONTROL       #
-        j         cs_loop                  # jump to cs_loop
+        bgt        $t1, $t3, goEast        				# if station.x > bot.x then goEast
+        # otherwise goWest				
+        li        $t0, 180                 				# $t0 = 180
+        sw        $t0, ANGLE               				#
+        li        $t0, 1                   				# $t0 = 1
+        sw        $t0, ANGLE_CONTROL       				#
+        j         cs_loop                  				# jump to cs_loop
 
 goEast:
-        li        $t0, 0                 # $t0 = 180
-        sw        $t0, ANGLE               #
-        li        $t0, 1                   # $t0 = 1
-        sw        $t0, ANGLE_CONTROL       #
-        j         cs_loop                  # jump to cs_loop
+        li        $t0, 0                 				# $t0 = 180
+        sw        $t0, ANGLE               				#
+        li        $t0, 1                   				# $t0 = 1
+        sw        $t0, ANGLE_CONTROL       				#
+        j         cs_loop                  				# jump to cs_loop
 
 goSN:
-        bgt        $t2, $t4, goSouth      # if station.y > bot.y then goSouth
+        bgt        $t2, $t4, goSouth      				# if station.y > bot.y then goSouth
         # otherwise goNorth
-        li        $t0, 270                 # $t0 = 180
-        sw        $t0, ANGLE               #
-        li        $t0, 1                   # $t0 = 1
-        sw        $t0, ANGLE_CONTROL       #
-        j         cs_loop                  # jump to cs_loop
+        li        $t0, 270                 				# $t0 = 180
+        sw        $t0, ANGLE               				#
+        li        $t0, 1                   				# $t0 = 1
+        sw        $t0, ANGLE_CONTROL       				#
+        j         cs_loop                  				# jump to cs_loop
 
 goSouth:
-        li        $t0, 90                 # $t0 = 180
-        sw        $t0, ANGLE               #
-        li        $t0, 1                   # $t0 = 1
-        sw        $t0, ANGLE_CONTROL       #
-        j         cs_loop                  # jump to cs_loop
+        li        $t0, 90                 				# $t0 = 180
+        sw        $t0, ANGLE               				#
+        li        $t0, 1                   				# $t0 = 1
+        sw        $t0, ANGLE_CONTROL       				#
+        j         cs_loop                  				# jump to cs_loop
 
 cs_loop:
-        j         chase_station             # jump to chase_station
+        j         chase_station             			# jump to chase_station
 cs_end:
-        j           interrupt_dispatch            # jump to interrupt_dispatch
+        j           interrupt_dispatch            		# jump to interrupt_dispatch
 
 bonk_interrupt:
-        sw          $a1, BONK_ACK               # acknowledge interrupt
-        # jal         standby                     # jump to standby and save position to $ra
+        sw          $a1, BONK_ACK               		# acknowledge interrupt
+        # jal         standby                     		# jump to standby and save position to $ra
 standby:
-        li        $t0, 10               # $t0 = 10
-        sw        $t0, VELOCITY         #
+        li        $t0, 10               				# $t0 = 10
+        sw        $t0, VELOCITY         				#
 
-        li          $t0, 0x960032           # (150, 50)
-        srl         $t1, $t0, 16            # $t1 = STATION_LOC.x
-        and         $t2, $t0, 0x0000ffff    # $t2 = STATION_LOC.y
-        lw          $t3, BOT_X              # $t3 = BOT_X
-        lw          $t4, BOT_Y              # $t4 = BOT_Y
-        li          $t5, 290                # $t5 = 290
-        bgt         $t1, $t5, sb_end        # if station.x > 290 then
+        li          $t0, 0x960032           			# (150, 50)
+        srl         $t1, $t0, 16            			# $t1 = STATION_LOC.x
+        and         $t2, $t0, 0x0000ffff    			# $t2 = STATION_LOC.y
+        lw          $t3, BOT_X              			# $t3 = BOT_X
+        lw          $t4, BOT_Y              			# $t4 = BOT_Y
+        li          $t5, 290                			# $t5 = 290
+        bgt         $t1, $t5, sb_end        			# if station.x > 290 then
 
 
-        bne         $t1, $t3, sb_goEW          # if station.x != bot.x then goEW
-        bne         $t2, $t4, sb_goSN          # if station.y != bot.y then goSN
-        j           sb_end                  # jump to cs_end
+        bne         $t1, $t3, sb_goEW          			# if station.x != bot.x then goEW
+        bne         $t2, $t4, sb_goSN          			# if station.y != bot.y then goSN
+        j           sb_end                  			# jump to cs_end
 
 sb_goEW:
-        bgt        $t1, $t3, sb_goEast        # if station.x > bot.x then goEast
+        bgt        $t1, $t3, sb_goEast        			# if station.x > bot.x then goEast
         # otherwise goWest
-        li        $t0, 180                 # $t0 = 180
-        sw        $t0, ANGLE               #
-        li        $t0, 1                   # $t0 = 1
-        sw        $t0, ANGLE_CONTROL       #
-        j         sb_loop                  # jump to cs_loop
+        li        $t0, 180                 				# $t0 = 180
+        sw        $t0, ANGLE               				#
+        li        $t0, 1                   				# $t0 = 1
+        sw        $t0, ANGLE_CONTROL       				#
+        j         sb_loop                  				# jump to cs_loop
 
 sb_goEast:
-        li        $t0, 0                 # $t0 = 180
-        sw        $t0, ANGLE               #
-        li        $t0, 1                   # $t0 = 1
-        sw        $t0, ANGLE_CONTROL       #
-        j         sb_loop                  # jump to cs_loop
+        li        $t0, 0                 				# $t0 = 180
+        sw        $t0, ANGLE               				#
+        li        $t0, 1                   				# $t0 = 1
+        sw        $t0, ANGLE_CONTROL       				#
+        j         sb_loop                  				# jump to cs_loop
 
 sb_goSN:
-        bgt        $t2, $t4, sb_goSouth      # if station.y > bot.y then goSouth
+        bgt        $t2, $t4, sb_goSouth      			# if station.y > bot.y then goSouth
         # otherwise goNorth
-        li        $t0, 270                 # $t0 = 180
-        sw        $t0, ANGLE               #
-        li        $t0, 1                   # $t0 = 1
-        sw        $t0, ANGLE_CONTROL       #
-        j         sb_loop                  # jump to cs_loop
+        li        $t0, 270                 				# $t0 = 180
+        sw        $t0, ANGLE               				#
+        li        $t0, 1                   				# $t0 = 1
+        sw        $t0, ANGLE_CONTROL       				#
+        j         sb_loop                  				# jump to cs_loop
 
 sb_goSouth:
-        li        $t0, 90                 # $t0 = 180
-        sw        $t0, ANGLE               #
-        li        $t0, 1                   # $t0 = 1
-        sw        $t0, ANGLE_CONTROL       #
-        j         sb_loop                  # jump to cs_loop
+        li        $t0, 90                 				# $t0 = 180
+        sw        $t0, ANGLE               				#
+        li        $t0, 1                   				# $t0 = 1
+        sw        $t0, ANGLE_CONTROL       				#
+        j         sb_loop                  				# jump to cs_loop
 
 sb_loop:
-        j         standby             # jump to chase_station
+        j         standby             					# jump to chase_station
 sb_end:
-        li        $t0, 0        # $t0 = 180
-        sw        $t0, ANGLE        #
-        li        $t0, 1        # $t0 = 1
-        sw        $t0, ANGLE_CONTROL        #
+        li        $t0, 0        						# $t0 = 180
+        sw        $t0, ANGLE        
+        li        $t0, 1        						# $t0 = 1
+        sw        $t0, ANGLE_CONTROL
 
-        li        $t0, 2        # $t0 = 1
-        sw        $t0, VELOCITY        #
+        li        $t0, 2        						# $t0 = 1
+        sw        $t0, VELOCITY        
 
-        # jr        $ra                       # jump to
-        j           interrupt_dispatch              # see if other interrupts are waiting
+        # jr        $ra                       			# jump to
+        j           interrupt_dispatch              	# see if other interrupts are waiting
 
-non_intrpt:				# was some non-interrupt
+non_intrpt:												# was some non-interrupt
 	   li	            $v0, PRINT_STRING
 	   la	            $a0, non_intrpt_str
-	   syscall				# print out an error message
-	# fall through to done
+	   syscall											# print out an error message
+														# fall through to done
 
 done:
 	   la	            $k0, someSpace
-	   lw	            $a0, 0($k0)		# Restore saved registers
+	   lw	            $a0, 0($k0)						# Restore saved registers
 	   lw	            $a1, 4($k0)
 .set noat
-	   move	        $at, $k1		# Restore $at
+	   move	        $at, $k1							# Restore $at
 .set at
 	   eret
