@@ -28,7 +28,7 @@ def main():
         evilPuzzle()
     else:
         findNearest()
-        if nearest_x == bot_x && nearest_y == bot_y:
+        if nearest_x == bot_x and nearest_y == bot_y:
             pickup()
         else:
             move(nearest_x, nearest_y)
@@ -63,7 +63,7 @@ def standbyPuzzle():
     bot_velocity = 3                    ## Whatever velocity needed to stabilize
 
 def standbyStation():
-    while x != wait_point_x && y != wait_point_y :
+    while x != wait_point_x and y != wait_point_y :
         if isFrozen:                    ## If we get frozen in the loop, we escape to handle it
             unfreezeBot()
         x = wait_point_x
