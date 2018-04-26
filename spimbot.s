@@ -171,7 +171,7 @@ main:
 		add        $sp, $sp, 20
 		# note that we infinite loop to avoid stopping the simulation early
 		j       main
-		
+
   #-------------------- chase function and standby function --------------------#
 
 chase:
@@ -690,7 +690,7 @@ chase_station_extract:
         sw          $t0, DROPOFF_ASTEROID   			# now the bot should overlap the station
         j           cs_end                  			# jump to cs_end
 
-goEW:
+	goEW:
         bgt        $t1, $t3, goEast        				# if station.x > bot.x then goEast
         # otherwise goWest
         li        $t0, 180                 				# $t0 = 180
@@ -699,14 +699,14 @@ goEW:
         sw        $t0, ANGLE_CONTROL       				#
         j         cs_loop                  				# jump to cs_loop
 
-goEast:
+	goEast:
         li        $t0, 0                 				# $t0 = 180
         sw        $t0, ANGLE               				#
         li        $t0, 1                   				# $t0 = 1
         sw        $t0, ANGLE_CONTROL       				#
         j         cs_loop                  				# jump to cs_loop
 
-goSN:
+	goSN:
         bgt        $t2, $t4, goSouth      				# if station.y > bot.y then goSouth
         # otherwise goNorth
         li        $t0, 270                 				# $t0 = 180
@@ -715,17 +715,17 @@ goSN:
         sw        $t0, ANGLE_CONTROL       				#
         j         cs_loop                  				# jump to cs_loop
 
-goSouth:
+	goSouth:
         li        $t0, 90                 				# $t0 = 180
         sw        $t0, ANGLE               				#
         li        $t0, 1                   				# $t0 = 1
         sw        $t0, ANGLE_CONTROL       				#
         j         cs_loop                  				# jump to cs_loop
-
-cs_loop:
+		
+	cs_loop:
         j         chase_station_extract             			# jump to chase_station
-cs_end:
-	jr 	  $ra
+	cs_end:
+		jr 	  $ra
 
 
 
