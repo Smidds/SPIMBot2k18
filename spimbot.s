@@ -78,54 +78,55 @@ main:
 		la 		$t0, isFrozen
 		lw 		$t0, 0($t0)
 		bne 	$t0, 1, else1				# Check if we're frozen
-  
+
 		##############################
 		##  Handle being frozen here #
 		##############################
-  
+
 		j 		main
 	 else1:
 	 	la 		$t0, station_up
 	 	lb 		$t0, 0($t0)
 	 	bne 	$t0, 1, leo_body				# Check if station is up
-  
+
 		# CHANGE leo_body TO else2
 
 	 	##############################
 	 	##  Chase the station here   #
 	 	##############################
 
-  		jal 	chase_station_extract
-	 	j		main
+  	jal 	chase_station_extract
+	 	j			main
+
 	else2:
 		la 		$t0, station_down
 		lw 		$t0, 0($t0)
 		bne 	$t0, 1, else3				# Check if station is down
-  
+
 		##############################
 		##  Do whatever we do here   #
 		##############################
-  
+
 		j		main
 	else3:
 		li 		$t0, LOW_ALT_WARN
 		lw 		$t1, BOT_X
 		blt 	$t0, $t1, else4				# Check if our altitude is too low and abort
-  
+
 		##############################
 		##  Correct altitutde here   #
 		##############################
-  
+
 		j 		main
 	else4:
 		li 		$t0, LOW_ENERGY_WARN
 		lw 		$t1, GET_ENERGY
 		blt 	$t0, $t1, else5				# Check if our energy is too low and abort
-  
+
 		##############################
 		##  Handle low energy here   #
 		##############################
-  
+
 		j 		main
 	else5:
 		lw 		$t0, 0(OTHER_BOT_X)
@@ -157,7 +158,7 @@ main:
 
     move       $a0, $s2             			# $a0 = $s0
     jal        chase                  			# chase
-    sw         $s0, COLLECT_ASTEROID  
+    sw         $s0, COLLECT_ASTEROID
 
 
     j          end                    			# jump to end
@@ -170,12 +171,12 @@ enable_int:
     mtc0      $s0, $12
 
 end:
-    add        $sp, $sp, 20        
-    lw         $s0, 0($sp)         
-    lw         $s1, 4($sp)         
-    lw         $s2, 8($sp)         
-    lw         $s3, 12($sp)        
-    lw         $ra, 16($sp)        
+    add        $sp, $sp, 20
+    lw         $s0, 0($sp)
+    lw         $s1, 4($sp)
+    lw         $s2, 8($sp)
+    lw         $s3, 12($sp)
+    lw         $ra, 16($sp)
     # note that we infinite loop to avoid stopping the simulation early
     j       main
 
@@ -403,7 +404,7 @@ count_disjoint_regions:
 		move $s2, $a2
 
         li   $t0, 0								# $t0 = 0 								// i
-	cdr_for_loop:		
+	cdr_for_loop:
 		lw   $t1, 0($a0)						# $t1 = lines->num_lines
 		bge  $t0, $t1, cdr_done					# Exit if i >= lines->num_lines
 
@@ -680,7 +681,7 @@ draw_line:
 
 
 
-## chase station 
+## chase station
 chase_station_extract:
         li          $t0, 10               				# $t0 = 10
         sw          $t0, VELOCITY         				#
@@ -699,7 +700,7 @@ chase_station_extract:
 
 goEW:
         bgt        $t1, $t3, goEast        				# if station.x > bot.x then goEast
-        # otherwise goWest				
+        # otherwise goWest
         li        $t0, 180                 				# $t0 = 180
         sw        $t0, ANGLE               				#
         li        $t0, 1                   				# $t0 = 1
@@ -730,7 +731,7 @@ goSouth:
         j         cs_loop                  				# jump to cs_loop
 
 cs_loop:
-        j         chase_station             			# jump to chase_station
+        j         chase_station_extract             			# jump to chase_station
 cs_end:
 	jr 	  $ra
 
@@ -747,13 +748,13 @@ unhandled_str:	.asciiz "Unhandled interrupt type\n"
 interrupt_handler:
 .set noat
         move        $k1, $at             				# save $at
-.set at				
+.set at
         la          $k0, someSpace       				#
         sw          $a0, 0($k0)          				# save $a0
         sw          $a1, 4($k0)          				# save $a1
 
         mfc0        $k0, $13             				# get cause register
-        srl	        $a0, $k0, 2				
+        srl	        $a0, $k0, 2
       	and	        $a0, $a0, 0xf		 				# ExcCode field
       	bne	        $a0, 0, non_intrpt
 
@@ -787,7 +788,7 @@ enter_int:
 chase_station:
 	li	    $a1, 1
 	sw	    $a1, station_up
-        j           interrupt_dispatch            		# jump to interrupt_dispatch
+  j           interrupt_dispatch            		# jump to interrupt_dispatch
 
 bonk_interrupt:
         sw          $a1, BONK_ACK               		# acknowledge interrupt
@@ -845,12 +846,12 @@ sb_loop:
         j         standby             					# jump to chase_station
 sb_end:
         li        $t0, 0        						# $t0 = 180
-        sw        $t0, ANGLE        
+        sw        $t0, ANGLE
         li        $t0, 1        						# $t0 = 1
         sw        $t0, ANGLE_CONTROL
 
         li        $t0, 2        						# $t0 = 1
-        sw        $t0, VELOCITY        
+        sw        $t0, VELOCITY
 
         # jr        $ra                       			# jump to
         j           interrupt_dispatch              	# see if other interrupts are waiting
