@@ -76,7 +76,7 @@ WAIT_STATION_Y			= 100
 main:
         # put your code here :)
 		la 		$t0, isFrozen
-		lw 		$t0, 0($t0)
+		lb 		$t0, 0($t0)
 		bne 	$t0, 1, else1				# Check if we're frozen
   
 		##############################
@@ -99,7 +99,7 @@ main:
 	 	j		main
 	else2:
 		la 		$t0, station_down
-		lw 		$t0, 0($t0)
+		lb 		$t0, 0($t0)
 		bne 	$t0, 1, else3				# Check if station is down
   
 		##############################
@@ -128,7 +128,7 @@ main:
   
 		j 		main
 	else5:
-		lw 		$t0, 0(OTHER_BOT_X)
+		lw 		$t0, OTHER_BOT_X
 		slt 	$t0, 70
 		bne 	$t0, 1, else5				# Check if the other bot is low enough to screw with them.
 
