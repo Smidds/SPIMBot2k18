@@ -95,7 +95,7 @@ main:
 	 	##  Chase the station here   #
 	 	##############################
 
-  	jal 	chase_station_extract
+  		jal 	chase_station_extract
 		sw    $0, station_up
 	 	j			main
 
@@ -139,7 +139,7 @@ main:
 
 		# j		main
 
-  leo_body:
+leo_body:
     sub        $sp, $sp, 20        				# get some space
     sw         $s0, 0($sp)         				#
     sw         $s1, 4($sp)         				#
