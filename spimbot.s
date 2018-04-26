@@ -4,9 +4,9 @@ PRINT_FLOAT_ADDR            = 0xffff0084
 PRINT_HEX_ADDR              = 0xffff0088
 
 # syscall constants
-PRINT_STRING            = 4
-PRINT_CHAR              = 11
-PRINT_INT               = 1
+PRINT_STRING            	= 4
+PRINT_CHAR              	= 11
+PRINT_INT               	= 1
 
 # spimbot memory-mapped I/O
 VELOCITY                    = 0xffff0010
@@ -55,11 +55,11 @@ BOT_FREEZE_INT_MASK         = 0x4000
 BOT_FREEZE_ACK              = 0xffff00e4
 
 ## Global Constants
-LOW_ALT_WARN			= 50
-SAFE_ALT			= 90
-LOW_ENERGY_WARN			= 200
+LOW_ALT_WARN				= 50
+SAFE_ALT					= 90
+LOW_ENERGY_WARN				= 200
 WAIT_STATION_X		        = 100
-WAIT_STATION_Y			= 100
+WAIT_STATION_Y				= 100
 
 # put your data things here
 .data
