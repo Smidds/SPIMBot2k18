@@ -65,12 +65,12 @@ WAIT_STATION_Y			= 100
 .data
 .align 2
 	asteroid_map_address: 	.space 	1024
-	puzzle_data:		.space 	336			## Looks like Puzzle is this big
-	puzzle_solution:	.space	8
-	station_up:   		.space 	1
-	station_down: 		.space 	1
-	isFrozen:		.space 	1
-	puzzleReady:		.space 	1
+	puzzle_data:			.space 	336			## Looks like Puzzle is this big
+	puzzle_solution:		.space	8
+	station_up:   			.space 	1
+	station_down: 			.space 	1
+	isFrozen:				.space 	1
+	puzzleReady:			.space 	1
 
 .text
 main:
