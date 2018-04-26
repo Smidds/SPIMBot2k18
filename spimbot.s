@@ -671,8 +671,6 @@ draw_line:
         # pray for me
         jr      $ra
 
-
-
 ## chase station
 chase_station_extract:
         li          $t0, 10               				# $t0 = 10
@@ -721,12 +719,73 @@ chase_station_extract:
         li        $t0, 1                   				# $t0 = 1
         sw        $t0, ANGLE_CONTROL       				#
         j         cs_loop                  				# jump to cs_loop
-		
+
 	cs_loop:
         j         chase_station_extract             			# jump to chase_station
 	cs_end:
 		jr 	  $ra
 
+standby:
+        li        	$t0, 10               				# $t0 = 10
+        sw        	$t0, VELOCITY         				#
+
+        li          $t0, 0x960032           			# (150, 50)
+        srl         $t1, $t0, 16            			# $t1 = STATION_LOC.x
+        and         $t2, $t0, 0x0000ffff    			# $t2 = STATION_LOC.y
+        lw          $t3, BOT_X              			# $t3 = BOT_X
+        lw          $t4, BOT_Y              			# $t4 = BOT_Y
+        li          $t5, 290                			# $t5 = 290
+        bgt         $t1, $t5, sb_end        			# if station.x > 290 then
+
+
+        bne         $t1, $t3, sb_goEW          			# if station.x != bot.x then goEW
+        bne         $t2, $t4, sb_goSN          			# if station.y != bot.y then goSN
+        j           sb_end                  			# jump to cs_end
+
+	sb_goEW:
+        bgt        	$t1, $t3, sb_goEast        			# if station.x > bot.x then goEast
+        # otherwise goWest
+        li        	$t0, 180                 				# $t0 = 180
+        sw        	$t0, ANGLE               				#
+        li        	$t0, 1                   				# $t0 = 1
+        sw        	$t0, ANGLE_CONTROL       				#
+        j         	sb_loop                  				# jump to cs_loop
+
+	sb_goEast:
+        li        	$t0, 0                 				# $t0 = 180
+        sw        	$t0, ANGLE               				#
+        li        	$t0, 1                   				# $t0 = 1
+        sw        	$t0, ANGLE_CONTROL       				#
+        j         	sb_loop                  				# jump to cs_loop
+
+	sb_goSN:
+        bgt        	$t2, $t4, sb_goSouth      			# if station.y > bot.y then goSouth
+        # otherwise goNorth
+        li        	$t0, 270                 				# $t0 = 180
+        sw        	$t0, ANGLE               				#
+        li        	$t0, 1                   				# $t0 = 1
+        sw        	$t0, ANGLE_CONTROL       				#
+        j         	sb_loop                  				# jump to cs_loop
+
+	sb_goSouth:
+        li        	$t0, 90                 				# $t0 = 180
+        sw        	$t0, ANGLE               				#
+        li        	$t0, 1                   				# $t0 = 1
+        sw        	$t0, ANGLE_CONTROL       				#
+        j         	sb_loop                  				# jump to cs_loop
+
+	sb_loop:
+        j         	standby             					# jump to chase_station
+	sb_end:
+        li        	$t0, 0        						# $t0 = 180
+        sw        	$t0, ANGLE
+        li        	$t0, 1        						# $t0 = 1
+        sw        	$t0, ANGLE_CONTROL
+
+        li        	$t0, 2        						# $t0 = 1
+        sw        	$t0, VELOCITY
+
+		jr 			$ra
 
 
 #--------------------------- interrupt handler data ---------------------------#
@@ -781,67 +840,6 @@ enter_int:
 bonk_interrupt:
         sw          $a1, BONK_ACK               		# acknowledge interrupt
         # jal         standby                     		# jump to standby and save position to $ra
-standby:
-        li        	$t0, 10               				# $t0 = 10
-        sw        	$t0, VELOCITY         				#
-
-        li          $t0, 0x960032           			# (150, 50)
-        srl         $t1, $t0, 16            			# $t1 = STATION_LOC.x
-        and         $t2, $t0, 0x0000ffff    			# $t2 = STATION_LOC.y
-        lw          $t3, BOT_X              			# $t3 = BOT_X
-        lw          $t4, BOT_Y              			# $t4 = BOT_Y
-        li          $t5, 290                			# $t5 = 290
-        bgt         $t1, $t5, sb_end        			# if station.x > 290 then
-
-
-        bne         $t1, $t3, sb_goEW          			# if station.x != bot.x then goEW
-        bne         $t2, $t4, sb_goSN          			# if station.y != bot.y then goSN
-        j           sb_end                  			# jump to cs_end
-
-sb_goEW:
-        bgt        $t1, $t3, sb_goEast        			# if station.x > bot.x then goEast
-        # otherwise goWest
-        li        $t0, 180                 				# $t0 = 180
-        sw        $t0, ANGLE               				#
-        li        $t0, 1                   				# $t0 = 1
-        sw        $t0, ANGLE_CONTROL       				#
-        j         sb_loop                  				# jump to cs_loop
-
-sb_goEast:
-        li        $t0, 0                 				# $t0 = 180
-        sw        $t0, ANGLE               				#
-        li        $t0, 1                   				# $t0 = 1
-        sw        $t0, ANGLE_CONTROL       				#
-        j         sb_loop                  				# jump to cs_loop
-
-sb_goSN:
-        bgt        $t2, $t4, sb_goSouth      			# if station.y > bot.y then goSouth
-        # otherwise goNorth
-        li        $t0, 270                 				# $t0 = 180
-        sw        $t0, ANGLE               				#
-        li        $t0, 1                   				# $t0 = 1
-        sw        $t0, ANGLE_CONTROL       				#
-        j         sb_loop                  				# jump to cs_loop
-
-sb_goSouth:
-        li        $t0, 90                 				# $t0 = 180
-        sw        $t0, ANGLE               				#
-        li        $t0, 1                   				# $t0 = 1
-        sw        $t0, ANGLE_CONTROL       				#
-        j         sb_loop                  				# jump to cs_loop
-
-sb_loop:
-        j         standby             					# jump to chase_station
-sb_end:
-        li        $t0, 0        						# $t0 = 180
-        sw        $t0, ANGLE
-        li        $t0, 1        						# $t0 = 1
-        sw        $t0, ANGLE_CONTROL
-
-        li        $t0, 2        						# $t0 = 1
-        sw        $t0, VELOCITY
-
-        # jr        $ra                       			# jump to
         j           interrupt_dispatch              	# see if other interrupts are waiting
 
 non_intrpt:												# was some non-interrupt
