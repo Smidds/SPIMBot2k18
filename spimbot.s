@@ -96,6 +96,7 @@ main:
 	 	##############################
 
   	jal 	chase_station_extract
+		sw    $0, station_up
 	 	j			main
 
 	else2:
