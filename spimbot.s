@@ -75,7 +75,6 @@ WAIT_STATION_Y			= 100
 .text
 main:
         # put your code here :)
-<<<<<<< HEAD
 	# 	la 		$t0, isFrozen
 	# 	lw 		$t0, 0($t0)
 	# 	bne 	$t0, 1, else1				# Check if we're frozen
@@ -143,7 +142,7 @@ main:
 #		jal 	solvePuzzle
 
 #		j		main
-=======
+
 		la 		$t0, isFrozen
 		lb 		$t0, 0($t0)
 		bne 	$t0, 1, else1				# Check if we're frozen
@@ -203,7 +202,6 @@ main:
 		# jal 	solvePuzzle
 
 		# j		main
->>>>>>> ca8d7f595f08b00f7cdbde0cec3ae7e023e2544f
 
   leo_body:
     sub        $sp, $sp, 20        				# get some space
