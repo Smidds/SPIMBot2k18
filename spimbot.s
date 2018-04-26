@@ -352,14 +352,14 @@ count_disjoint_regions_step:
 flood_fill:
         # Your code goes here :)
         slt  $t0, $a0, 0                        # $t0 = row < 0 
-		beq  $t0, 1, end						# If row < 0 is true, exit
+		beq  $t0, 1, ff_end						# If row < 0 is true, exit
         slt  $t0, $a1, 0                        # $t0 = col < 0
-		beq  $t0, 1, end						# If col < 0 is true, exit
+		beq  $t0, 1, ff_end						# If col < 0 is true, exit
 		lw   $t0, 0($a3)						# $t0 = canvas->height
-		bge  $a0, $t0, end						# If row >= canvas->height is false, exit
+		bge  $a0, $t0, ff_end						# If row >= canvas->height is false, exit
 		lw   $t0, 4($a3)						# $t0 = canvas->width
-		bge  $a1, $t0, end						# If row >= canvas->width is false, exit
-	false:
+		bge  $a1, $t0, ff_end						# If row >= canvas->width is false, exit
+	ff_false:
 		lw   $t0, 12($a3)						# $t0 = &(canvas->canvas)
 		mul  $t1, $a0, 4						# Get the true "row" index
 		add  $t0, $t0, $t1						# $t0 = &canvas->canvas[row]
@@ -369,8 +369,8 @@ flood_fill:
 		lb   $t1, 0($t0)						# $t1 = canvas->canvas[row][col] // $t1 = curr
 		lb 	 $t3, 8($a3)						# $t3 = canvas->marker
 
-		beq  $t1, $t3, end						# If curr != canvas->pattern, bail
-		beq  $t1, $a2, end						# If curr != marker, bail
+		beq  $t1, $t3, ff_end						# If curr != canvas->pattern, bail
+		beq  $t1, $a2, ff_end						# If curr != marker, bail
 
 		sub  $sp, $sp, 20						# Build that register, SON!
         sw   $ra, 0($sp)                        # ... and store $ra while yer at it
@@ -414,14 +414,14 @@ flood_fill:
 		sub  $a1, $a1, 1						# $a1 = col - 1
 		jal  flood_fill							# flood_fill(row, col - 1, marker, canvas);
 
-		lw   $s0, 4($sp)						# Restore those $s registers
-		lw   $s1, 8($sp)
-		lw   $s2, 12($sp)
-		lw   $s3, 16($sp)
+		lw   	$s0, 4($sp)						# Restore those $s registers
+		lw   	$s1, 8($sp)
+		lw   	$s2, 12($sp)
+		lw   	$s3, 16($sp)
 
-		lw   $ra, 0($sp)						# Restore $ra
-		add  $sp, $sp, 20						# Tear down the stack!
-	end:
+		lw   	$ra, 0($sp)						# Restore $ra
+		add  	$sp, $sp, 20						# Tear down the stack!
+	ff_end:
         # Pray for me
         jr      $ra
 
@@ -439,36 +439,29 @@ flood_fill:
 #                                               #
 #################################################
 draw_line:
-        # Your code goes here :)
-      if:
-        lw     $t0, 4($a2)                      # $t0 = canvas-width
-        li     $t1, 1                           # $t1 = step_size = 1
-        sub    $t2, $a1, $a0                    # $t2 = end_pos - start_pos
-        blt    $t2, $t0, exit_if                   # if end_pos - start_pos < width then
-        move   $t1, $t0                         # step_size = width
+    if:
+        lw     	$t0, 4($a2)           			# $t0 = canvas-width
+        li     	$t1, 1                			# $t1 = step_size = 1
+        sub    	$t2, $a1, $a0         			# $t2 = end_pos - start_pos
+        blt    	$t2, $t0, dl_exit_if  			# if end_pos - start_pos < width then
+        move   	$t1, $t0              			# step_size = width
+    dl_exit_if:
+        move   	$t2, $a0						# $t2 = pos = start_pos
+    dl_for:
+        add    	$t3, $a1, $t1     				# $t3 = end_pos + step_size
+        beq    	$t2, $t3, dl_done 				# if $t2 == $t3, finish
+        lb     	$t3, 8($a2)       				# $t3 = canvas->pattern
+        div    	$t5, $t2, $t0     				# $t5 = pos / width
+        mul    	$t5, $t5, 4       				# $t5 = 4 * $t5 to get actual index
+        lw     	$t4, 12($a2)      				# $t4 = &(canvas->canvas)
+        add    	$t4, $t4, $t5     				# $t4 = &(canvas[pos / width])
+        lw     	$t4, 0($t4)       				# $t4 = (canvas[pos / width])
+        rem    	$t5, $t2, $t0     				# pos % width
+        add    	$t4, $t4, $t5     				# $t4 = &(canvas[pos / width][pos % width])
+        sb     	$t3, 0($t4)       				# store into $t4 canvas-pattern
+        add    	$t2, $t2, $t1     				# pos += step_size
+        j      	dl_for            				# jump to the beginning of the for loop
 
-      exit_if:
-        move   $t2, $a0                         # $t2 = pos = start_pos
-
-      for:
-        add    $t3, $a1, $t1                    # $t3 = end_pos + step_size
-        beq    $t2, $t3, done                   # if $t2 == $t3, finish
-
-        # We can only replace $t3, as it'll be reset
-        # So $t3 - $t6 we can work with
-
-        lb     $t3, 8($a2)                      # $t3 = canvas->pattern
-        div    $t5, $t2, $t0                    # $t5 = pos / width
-        mul    $t5, $t5, 4                      # $t5 = 4 * $t5 to get actual index
-        lw     $t4, 12($a2)                     # $t4 = &(canvas->canvas)
-        add    $t4, $t4, $t5                    # $t4 = &(canvas[pos / width])
-        lw     $t4, 0($t4)                      # $t4 = (canvas[pos / width])
-        rem    $t5, $t2, $t0                    # pos % width
-        add    $t4, $t4, $t5                    # $t4 = &(canvas[pos / width][pos % width])
-        sb     $t3, 0($t4)                      # store into $t4 canvas-pattern
-        add    $t2, $t2, $t1                    # pos += step_size
-        j      for                              # jump to the beginning of the for loop
-
-      done:
+	dl_done:
         # pray for me
         jr      $ra
