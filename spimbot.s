@@ -140,7 +140,7 @@ main:
 		sw         $s2, 8($sp)         				#
 		sw         $s3, 12($sp)        				#
 		sw         $ra, 16($sp)
-		        		
+
 		jal        findNearest         				# findNearest
 		move       $s2, $v0            				# $a0 = $v
 		lw         $s0, GET_CARGO       			# $s0 = cargo_amount
@@ -729,7 +729,6 @@ cs_end:
 
 
 
-
 #--------------------------- interrupt handler data ---------------------------#
 .kdata
 someSpace:          .space 8    # some space for 2 registers
@@ -764,30 +763,27 @@ interrupt_dispatch:                      				# interrupt dispatch center
         bne         $a0, $zero, bonk_interrupt          # if $a0 != $zero then bonk_interrupt
 
         li	        $v0, PRINT_STRING	         		# Unhandled interrupt types
-    	  la	        $a0, unhandled_str
-    	  syscall
+    	la	        $a0, unhandled_str
+    	syscall
         j           done                 				# jump to done
 
 exit_int:
         sw          $a1, STATION_EXIT_ACK        		# Ack it
         # jal         standby                      		# go to (200, 200)
-
         j           interrupt_dispatch           		# jump to interrupt_dispatch
 
 enter_int:
         sw          $a1, STATION_ENTER_ACK        		# Ack it
-
-chase_station:
-	li	    $a1, 1
-	sw	    $a1, station_up
-  j           interrupt_dispatch            		# jump to interrupt_dispatch
+		li	    	$a1, 1
+		sb	    	$a1, station_up
+  		j           interrupt_dispatch            		# jump to interrupt_dispatch
 
 bonk_interrupt:
         sw          $a1, BONK_ACK               		# acknowledge interrupt
         # jal         standby                     		# jump to standby and save position to $ra
 standby:
-        li        $t0, 10               				# $t0 = 10
-        sw        $t0, VELOCITY         				#
+        li        	$t0, 10               				# $t0 = 10
+        sw        	$t0, VELOCITY         				#
 
         li          $t0, 0x960032           			# (150, 50)
         srl         $t1, $t0, 16            			# $t1 = STATION_LOC.x
