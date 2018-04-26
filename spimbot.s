@@ -84,16 +84,24 @@ main:
 	# 	##############################
   #
 	# 	j 		main
-	# else1:
-	# 	la 		$t0, station_up
-	# 	lw 		$t0, 0($t0)
-	# 	bne 	$t0, 1, else2				# Check if station is up
-  #
-	# 	##############################
-	# 	##  Chase the station here   #
-	# 	##############################
-  #
-	# 	j		main
+
+
+	 else1:
+	 	la 		$t0, station_up
+	 	lb 		$t0, 0($t0)
+	 	bne 		$t0, 1, leo_body				# Check if station is up
+  
+		# CHANGE leo_body TO else2
+
+
+	 	##############################
+	 	##  Chase the station here   #
+	 	##############################
+
+  		jal 		chase_station_extract
+	 	j		main
+
+
 	# else2:
 	# 	la 		$t0, station_down
 	# 	lw 		$t0, 0($t0)
@@ -678,6 +686,59 @@ draw_line:
 
 
 
+## chase station 
+chase_station_extract:
+        li          $t0, 10               				# $t0 = 10
+        sw          $t0, VELOCITY         				#
+
+        lw          $t0, STATION_LOC        			#
+        srl         $t1, $t0, 16            			# $t1 = STATION_LOC.x
+        and         $t2, $t0, 0x0000ffff    			# $t2 = STATION_LOC.y
+        lw          $t3, BOT_X              			# $t3 = BOT_X
+        lw          $t4, BOT_Y              			# $t4 = BOT_Y
+
+
+        bne         $t1, $t3, goEW          			# if station.x != bot.x then goEW
+        bne         $t2, $t4, goSN          			# if station.y != bot.y then goSN
+        sw          $t0, DROPOFF_ASTEROID   			# now the bot should overlap the station
+        j           cs_end                  			# jump to cs_end
+
+goEW:
+        bgt        $t1, $t3, goEast        				# if station.x > bot.x then goEast
+        # otherwise goWest				
+        li        $t0, 180                 				# $t0 = 180
+        sw        $t0, ANGLE               				#
+        li        $t0, 1                   				# $t0 = 1
+        sw        $t0, ANGLE_CONTROL       				#
+        j         cs_loop                  				# jump to cs_loop
+
+goEast:
+        li        $t0, 0                 				# $t0 = 180
+        sw        $t0, ANGLE               				#
+        li        $t0, 1                   				# $t0 = 1
+        sw        $t0, ANGLE_CONTROL       				#
+        j         cs_loop                  				# jump to cs_loop
+
+goSN:
+        bgt        $t2, $t4, goSouth      				# if station.y > bot.y then goSouth
+        # otherwise goNorth
+        li        $t0, 270                 				# $t0 = 180
+        sw        $t0, ANGLE               				#
+        li        $t0, 1                   				# $t0 = 1
+        sw        $t0, ANGLE_CONTROL       				#
+        j         cs_loop                  				# jump to cs_loop
+
+goSouth:
+        li        $t0, 90                 				# $t0 = 180
+        sw        $t0, ANGLE               				#
+        li        $t0, 1                   				# $t0 = 1
+        sw        $t0, ANGLE_CONTROL       				#
+        j         cs_loop                  				# jump to cs_loop
+
+cs_loop:
+        j         chase_station             			# jump to chase_station
+cs_end:
+	jr 	  $ra
 
 
 
@@ -730,56 +791,8 @@ enter_int:
         sw          $a1, STATION_ENTER_ACK        		# Ack it
 
 chase_station:
-        li          $t0, 10               				# $t0 = 10
-        sw          $t0, VELOCITY         				#
-
-        lw          $t0, STATION_LOC        			#
-        srl         $t1, $t0, 16            			# $t1 = STATION_LOC.x
-        and         $t2, $t0, 0x0000ffff    			# $t2 = STATION_LOC.y
-        lw          $t3, BOT_X              			# $t3 = BOT_X
-        lw          $t4, BOT_Y              			# $t4 = BOT_Y
-
-
-        bne         $t1, $t3, goEW          			# if station.x != bot.x then goEW
-        bne         $t2, $t4, goSN          			# if station.y != bot.y then goSN
-        sw          $t0, DROPOFF_ASTEROID   			# now the bot should overlap the station
-        j           cs_end                  			# jump to cs_end
-
-goEW:
-        bgt        $t1, $t3, goEast        				# if station.x > bot.x then goEast
-        # otherwise goWest				
-        li        $t0, 180                 				# $t0 = 180
-        sw        $t0, ANGLE               				#
-        li        $t0, 1                   				# $t0 = 1
-        sw        $t0, ANGLE_CONTROL       				#
-        j         cs_loop                  				# jump to cs_loop
-
-goEast:
-        li        $t0, 0                 				# $t0 = 180
-        sw        $t0, ANGLE               				#
-        li        $t0, 1                   				# $t0 = 1
-        sw        $t0, ANGLE_CONTROL       				#
-        j         cs_loop                  				# jump to cs_loop
-
-goSN:
-        bgt        $t2, $t4, goSouth      				# if station.y > bot.y then goSouth
-        # otherwise goNorth
-        li        $t0, 270                 				# $t0 = 180
-        sw        $t0, ANGLE               				#
-        li        $t0, 1                   				# $t0 = 1
-        sw        $t0, ANGLE_CONTROL       				#
-        j         cs_loop                  				# jump to cs_loop
-
-goSouth:
-        li        $t0, 90                 				# $t0 = 180
-        sw        $t0, ANGLE               				#
-        li        $t0, 1                   				# $t0 = 1
-        sw        $t0, ANGLE_CONTROL       				#
-        j         cs_loop                  				# jump to cs_loop
-
-cs_loop:
-        j         chase_station             			# jump to chase_station
-cs_end:
+	li	    $a1, 1
+	sw	    $a1, station_up
         j           interrupt_dispatch            		# jump to interrupt_dispatch
 
 bonk_interrupt:
