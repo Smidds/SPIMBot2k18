@@ -49,10 +49,24 @@ STATION_EXIT_ACK            = 0xffff0064
 BOT_FREEZE_INT_MASK         = 0x4000
 BOT_FREEZE_ACK              = 0xffff00e4
 
+## Global Constants
+LOW_ALT_WARN				= 50
+SAFE_ALT					= 90
+LOW_ENERGY_WARN				= 200
+WAIT_STATION_X				= 100
+WAIT_STATION_Y				= 100
 
-.data
 # put your data things here
-
+.data
+.align 2
+	asteroid_map: 		.space 	1024
+	puzzle_data:		.space 	336			## Looks like Puzzle is this big
+	puzzle_solution:	.space	8
+	station_up:   		.space 	1
+	station_down: 		.space 	1
+	station_down: 		.space 	1
+	isFrozen:			.space 	1
+	puzzleReady:		.space 	1
 
 .text
 main:
@@ -60,3 +74,35 @@ main:
 
         # note that we infinite loop to avoid stopping the simulation early
         j       main
+
+
+
+#################################################
+# Solve_Puzzle:									#
+#   Solves a puzzle in the method specified.	#
+#                                               #
+#   $a0 = 0 -> energize | 1 -> evil             #
+#                                               #
+#################################################
+solvePuzzle:
+        sub		$sp, $sp, 8					# Sub off our stack here as we handle stuff
+		sw 		$ra, 0($sp) 				# Protect the $ra
+		sw 		$t0, 4($sp) 				# Protect the $t0
+
+		#############################
+		##  Solve the puzzle here   #
+		#############################
+
+		beq 	$a0, $0, puzzle_continue	# If $a0 = 0 skip setting the throw bit
+		sw 		$a1, THROW_PUZZLE
+	puzzle_continue:
+		la 		$t0, puzzle_solution
+		lw 		$t0, 4($t0)
+		sw 		$t0, SUBMIT_SOLUTION
+		sw 		$0, puzzle_solution			# Zero out our puzzle_solution struct
+
+		lw 		$ra, 0($sp) 				# Restore the $ra
+		lw 		$t0, 4($sp) 				# Restore the $t0
+		add		$sp, $sp, 8					# Sub off our stack here as we handle stuff
+		jr 		$ra
+		
