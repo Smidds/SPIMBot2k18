@@ -4,9 +4,9 @@ PRINT_FLOAT_ADDR            = 0xffff0084
 PRINT_HEX_ADDR              = 0xffff0088
 
 # syscall constants
-PRINT_STRING            = 4
-PRINT_CHAR              = 11
-PRINT_INT               = 1
+PRINT_STRING            	= 4
+PRINT_CHAR              	= 11
+PRINT_INT               	= 1
 
 # spimbot memory-mapped I/O
 VELOCITY                    = 0xffff0010
@@ -55,11 +55,11 @@ BOT_FREEZE_INT_MASK         = 0x4000
 BOT_FREEZE_ACK              = 0xffff00e4
 
 ## Global Constants
-LOW_ALT_WARN			= 50
-SAFE_ALT			= 90
-LOW_ENERGY_WARN			= 200
+LOW_ALT_WARN				= 50
+SAFE_ALT					= 90
+LOW_ENERGY_WARN				= 200
 WAIT_STATION_X		        = 100
-WAIT_STATION_Y			= 100
+WAIT_STATION_Y				= 100
 
 # put your data things here
 .data
@@ -76,7 +76,7 @@ WAIT_STATION_Y			= 100
 main:
         # put your code here :)
 		la 		$t0, isFrozen
-		lw 		$t0, 0($t0)
+		lb 		$t0, 0($t0)
 		bne 	$t0, 1, else1				# Check if we're frozen
 
 		##############################
@@ -84,7 +84,7 @@ main:
 		##############################
 
 		j 		main
-	 else1:
+	else1:
 	 	la 		$t0, station_up
 	 	lb 		$t0, 0($t0)
 	 	bne 	$t0, 1, leo_body				# Check if station is up
@@ -100,7 +100,7 @@ main:
 
 	else2:
 		la 		$t0, station_down
-		lw 		$t0, 0($t0)
+		lb 		$t0, 0($t0)
 		bne 	$t0, 1, else3				# Check if station is down
 
 		##############################
@@ -129,7 +129,7 @@ main:
 
 		j 		main
 	else5:
-		lw 		$t0, 0(OTHER_BOT_X)
+		lw 		$t0, OTHER_BOT_X
 		slt 	$t0, 70
 		bne 	$t0, 1, else5				# Check if the other bot is low enough to screw with them.
 
