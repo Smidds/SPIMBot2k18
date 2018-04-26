@@ -71,6 +71,65 @@ WAIT_STATION_Y				= 100
 .text
 main:
         # put your code here :)
+		la 		$t0, isFrozen
+		lw 		$t0, 0($t0)
+		bne 	$t0, 1, else1				# Check if we're frozen
+
+		##############################
+		##  Handle being frozen here #
+		##############################		
+
+		j 		main
+	else1:
+		la 		$t0, station_up
+		lw 		$t0, 0($t0)
+		bne 	$t0, 1, else2				# Check if station is up
+
+		##############################
+		##  Chase the station here   #
+		##############################
+
+		j		main
+	else2:
+		la 		$t0, station_down
+		lw 		$t0, 0($t0)
+		bne 	$t0, 1, else3				# Check if station is down
+
+		##############################
+		##  Do whatever we do here   #
+		##############################
+
+		j		main
+	else3:									
+		li 		$t0, LOW_ALT_WARN		
+		lw 		$t1, BOT_X
+		blt 	$t0, $t1, else4				# Check if our altitude is too low and abort
+
+		##############################
+		##  Correct altitutde here   #
+		##############################
+
+		j 		main
+	else4:
+		li 		$t0, LOW_ENERGY_WARN		
+		lw 		$t1, GET_ENERGY
+		blt 	$t0, $t1, else5				# Check if our energy is too low and abort
+
+		##############################
+		##  Handle low energy here   #
+		##############################
+
+		j 		main
+	else5:
+		lw 		$t0, 0(OTHER_BOT_X)
+		slt 	$t0, 70
+		bne 	$t0, 1, else5				# Check if the other bot is low enough to screw with them.
+
+		move 	$a0, 1
+		jal 	solvePuzzle
+
+		j		main
+
 
         # note that we infinite loop to avoid stopping the simulation early
         j       main
