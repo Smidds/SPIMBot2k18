@@ -132,7 +132,6 @@ main:
 	else5:
 		lw 		$t0, OTHER_BOT_X
 		slt 	$t0, 70
-<<<<<<< HEAD
 		bne 	$t0, 1, else5				# Check if the other bot is low enough to screw with them.
 
 		# move 	$a0, 1
@@ -181,47 +180,6 @@ end:
     lw         $ra, 16($sp)
     # note that we infinite loop to avoid stopping the simulation early
     j       main
-=======
-		bne 	$t0, 1, else_done					# Check if the other bot is low enough to screw with them.
-	else_done:
-		sub        $sp, $sp, 20        				# get some space
-		sw         $s0, 0($sp)         				#
-		sw         $s1, 4($sp)         				#
-		sw         $s2, 8($sp)         				#
-		sw         $s3, 12($sp)        				#
-		sw         $ra, 16($sp)
-		        		
-		jal        findNearest         				# findNearest
-		move       $s2, $v0            				# $a0 = $v
-		lw         $s0, GET_CARGO       			# $s0 = cargo_amount
-		add        $s0, $s0, $v1        			# $s0 = cargo_amount + best_points
-		li         $s1, 126             			# $s1 = 126
-		bge        $s0, $s1, enable_int_station 	# if $s0 >= $s1 then enable_int
-		li         $s0, 0               			# $s0 = 0
-		mtc0       $s0, $12             			# disable to global interrupt signal
-		move       $a0, $s2             			# $a0 = $s0
-		jal        chase                  			# chase
-    	sw         $s0, COLLECT_ASTEROID
-
-    	j          end                    			# jump to end
-	
-	enable_int_station:
-		li        $s0, STATION_EXIT_INT_MASK        # $s0 = STATION_EXIT_INT_MASK
-		or        $s0, $s0, STATION_ENTER_INT_MASK  # $s0 += STATION_ENTER_INT_MASK
-		or        $s0, $s0, BONK_INT_MASK
-		or        $s0, $s0, 1
-		mtc0      $s0, $12
-	
-	end:
-		lw         $s0, 0($sp)
-		lw         $s1, 4($sp)
-		lw         $s2, 8($sp)
-		lw         $s3, 12($sp)
-		lw         $ra, 16($sp)
-		add        $sp, $sp, 20
-		# note that we infinite loop to avoid stopping the simulation early
-		j       main
->>>>>>> b1206621ef93d1ed9cf201a89c8eda51883e035d
 
   #-------------------- chase function and standby function --------------------#
 
@@ -815,8 +773,8 @@ interrupt_dispatch:                      				# interrupt dispatch center
         bne         $a0, $zero, bonk_interrupt          # if $a0 != $zero then bonk_interrupt
 
         li	        $v0, PRINT_STRING	         		# Unhandled interrupt types
-    	  la	        $a0, unhandled_str
-    	  syscall
+    	la	        $a0, unhandled_str
+    	syscall
         j           done                 				# jump to done
 
 exit_int:
@@ -829,16 +787,16 @@ enter_int:
         sw          $a1, STATION_ENTER_ACK        		# Ack it
 
 chase_station:
-	li	    $a1, 1
-	sw	    $a1, station_up
-  j           interrupt_dispatch            		# jump to interrupt_dispatch
+		li	    	$a1, 1
+		sw	    	$a1, station_up
+  		j           interrupt_dispatch            		# jump to interrupt_dispatch
 
 bonk_interrupt:
         sw          $a1, BONK_ACK               		# acknowledge interrupt
         # jal         standby                     		# jump to standby and save position to $ra
 standby:
-        li        $t0, 10               				# $t0 = 10
-        sw        $t0, VELOCITY         				#
+        li        	$t0, 10               				# $t0 = 10
+        sw        	$t0, VELOCITY         				#
 
         li          $t0, 0x960032           			# (150, 50)
         srl         $t1, $t0, 16            			# $t1 = STATION_LOC.x
