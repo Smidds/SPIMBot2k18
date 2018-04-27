@@ -132,54 +132,45 @@ main:
 	else5:
 		lw 		$t0, OTHER_BOT_X
 		slt 	$t0, 70
-		bne 	$t0, 1, else5				# Check if the other bot is low enough to screw with them.
+		bne 	$t0, 1, else_done					# Check if the other bot is low enough to screw with them.
+	else_done:
+		sub        $sp, $sp, 20        				# get some space
+		sw         $s0, 0($sp)         				#
+		sw         $s1, 4($sp)         				#
+		sw         $s2, 8($sp)         				#
+		sw         $s3, 12($sp)        				#
+		sw         $ra, 16($sp)
 
-		# move 	$a0, 1
-		# jal 	solvePuzzle
+		jal        findNearest         				# findNearest
+		move       $s2, $v0            				# $a0 = $v
+		lw         $s0, GET_CARGO       			# $s0 = cargo_amount
+		add        $s0, $s0, $v1        			# $s0 = cargo_amount + best_points
+		li         $s1, 126             			# $s1 = 126
+		bge        $s0, $s1, enable_int_station 	# if $s0 >= $s1 then enable_int
+		li         $s0, 0               			# $s0 = 0
+		mtc0       $s0, $12             			# disable to global interrupt signal
+		move       $a0, $s2             			# $a0 = $s0
+		jal        chase                  			# chase
+    	sw         $s0, COLLECT_ASTEROID
 
-		# j		main
+    	j          end                    			# jump to end
 
-leo_body:
-    sub        $sp, $sp, 20        				# get some space
-    sw         $s0, 0($sp)         				#
-    sw         $s1, 4($sp)         				#
-    sw         $s2, 8($sp)         				#
-    sw         $s3, 12($sp)        				#
-    sw         $ra, 16($sp)        				#
+	enable_int_station:
+		li        $s0, STATION_EXIT_INT_MASK        # $s0 = STATION_EXIT_INT_MASK
+		or        $s0, $s0, STATION_ENTER_INT_MASK  # $s0 += STATION_ENTER_INT_MASK
+		or        $s0, $s0, BONK_INT_MASK
+		or        $s0, $s0, 1
+		mtc0      $s0, $12
 
-    jal        findNearest         				# findNearest
-    move       $s2, $v0            				# $a0 = $v0
-
-    lw         $s0, GET_CARGO       			# $s0 = cargo_amount
-    add        $s0, $s0, $v1        			# $s0 = cargo_amount + best_points
-    li         $s1, 126             			# $s1 = 126
-    bge        $s0, $s1, enable_int 			# if $s0 >= $s1 then enable_int
-    li         $s0, 0               			# $s0 = 0
-    mtc0       $s0, $12             			# disable to global interrupt signals
-
-    move       $a0, $s2             			# $a0 = $s0
-    jal        chase                  			# chase
-    sw         $s0, COLLECT_ASTEROID
-
-
-    j          end                    			# jump to end
-
-enable_int:
-    li        $s0, STATION_EXIT_INT_MASK        # $s0 = STATION_EXIT_INT_MASK
-    or        $s0, $s0, STATION_ENTER_INT_MASK  # $s0 += STATION_ENTER_INT_MASK
-    or        $s0, $s0, BONK_INT_MASK
-    or        $s0, $s0, 1
-    mtc0      $s0, $12
-
-end:
-    add        $sp, $sp, 20
-    lw         $s0, 0($sp)
-    lw         $s1, 4($sp)
-    lw         $s2, 8($sp)
-    lw         $s3, 12($sp)
-    lw         $ra, 16($sp)
-    # note that we infinite loop to avoid stopping the simulation early
-    j       main
+	end:
+		lw         $s0, 0($sp)
+		lw         $s1, 4($sp)
+		lw         $s2, 8($sp)
+		lw         $s3, 12($sp)
+		lw         $ra, 16($sp)
+		add        $sp, $sp, 20
+		# note that we infinite loop to avoid stopping the simulation early
+		j       main
 
   #-------------------- chase function and standby function --------------------#
 
@@ -680,8 +671,6 @@ draw_line:
         # pray for me
         jr      $ra
 
-
-
 ## chase station
 chase_station_extract:
         li          $t0, 10               				# $t0 = 10
@@ -699,7 +688,7 @@ chase_station_extract:
         sw          $t0, DROPOFF_ASTEROID   			# now the bot should overlap the station
         j           cs_end                  			# jump to cs_end
 
-goEW:
+	goEW:
         bgt        $t1, $t3, goEast        				# if station.x > bot.x then goEast
         # otherwise goWest
         li        $t0, 180                 				# $t0 = 180
@@ -708,14 +697,14 @@ goEW:
         sw        $t0, ANGLE_CONTROL       				#
         j         cs_loop                  				# jump to cs_loop
 
-goEast:
+	goEast:
         li        $t0, 0                 				# $t0 = 180
         sw        $t0, ANGLE               				#
         li        $t0, 1                   				# $t0 = 1
         sw        $t0, ANGLE_CONTROL       				#
         j         cs_loop                  				# jump to cs_loop
 
-goSN:
+	goSN:
         bgt        $t2, $t4, goSouth      				# if station.y > bot.y then goSouth
         # otherwise goNorth
         li        $t0, 270                 				# $t0 = 180
@@ -724,19 +713,79 @@ goSN:
         sw        $t0, ANGLE_CONTROL       				#
         j         cs_loop                  				# jump to cs_loop
 
-goSouth:
+	goSouth:
         li        $t0, 90                 				# $t0 = 180
         sw        $t0, ANGLE               				#
         li        $t0, 1                   				# $t0 = 1
         sw        $t0, ANGLE_CONTROL       				#
         j         cs_loop                  				# jump to cs_loop
 
-cs_loop:
+	cs_loop:
         j         chase_station_extract             			# jump to chase_station
-cs_end:
-	jr 	  $ra
+	cs_end:
+		jr 	  $ra
+
+standby:
+        li        	$t0, 10               				# $t0 = 10
+        sw        	$t0, VELOCITY         				#
+
+        li          $t0, 0x960032           			# (150, 50)
+        srl         $t1, $t0, 16            			# $t1 = STATION_LOC.x
+        and         $t2, $t0, 0x0000ffff    			# $t2 = STATION_LOC.y
+        lw          $t3, BOT_X              			# $t3 = BOT_X
+        lw          $t4, BOT_Y              			# $t4 = BOT_Y
+        li          $t5, 290                			# $t5 = 290
+        bgt         $t1, $t5, sb_end        			# if station.x > 290 then
 
 
+        bne         $t1, $t3, sb_goEW          			# if station.x != bot.x then goEW
+        bne         $t2, $t4, sb_goSN          			# if station.y != bot.y then goSN
+        j           sb_end                  			# jump to cs_end
+
+	sb_goEW:
+        bgt        	$t1, $t3, sb_goEast        			# if station.x > bot.x then goEast
+        # otherwise goWest
+        li        	$t0, 180                 				# $t0 = 180
+        sw        	$t0, ANGLE               				#
+        li        	$t0, 1                   				# $t0 = 1
+        sw        	$t0, ANGLE_CONTROL       				#
+        j         	sb_loop                  				# jump to cs_loop
+
+	sb_goEast:
+        li        	$t0, 0                 				# $t0 = 180
+        sw        	$t0, ANGLE               				#
+        li        	$t0, 1                   				# $t0 = 1
+        sw        	$t0, ANGLE_CONTROL       				#
+        j         	sb_loop                  				# jump to cs_loop
+
+	sb_goSN:
+        bgt        	$t2, $t4, sb_goSouth      			# if station.y > bot.y then goSouth
+        # otherwise goNorth
+        li        	$t0, 270                 				# $t0 = 180
+        sw        	$t0, ANGLE               				#
+        li        	$t0, 1                   				# $t0 = 1
+        sw        	$t0, ANGLE_CONTROL       				#
+        j         	sb_loop                  				# jump to cs_loop
+
+	sb_goSouth:
+        li        	$t0, 90                 				# $t0 = 180
+        sw        	$t0, ANGLE               				#
+        li        	$t0, 1                   				# $t0 = 1
+        sw        	$t0, ANGLE_CONTROL       				#
+        j         	sb_loop                  				# jump to cs_loop
+
+	sb_loop:
+        j         	standby             					# jump to chase_station
+	sb_end:
+        li        	$t0, 0        						# $t0 = 180
+        sw        	$t0, ANGLE
+        li        	$t0, 1        						# $t0 = 1
+        sw        	$t0, ANGLE_CONTROL
+
+        li        	$t0, 2        						# $t0 = 1
+        sw        	$t0, VELOCITY
+
+		jr 			$ra
 
 
 #--------------------------- interrupt handler data ---------------------------#
@@ -780,20 +829,25 @@ interrupt_dispatch:                      				# interrupt dispatch center
 exit_int:
         sw          $a1, STATION_EXIT_ACK        		# Ack it
         # jal         standby                      		# go to (200, 200)
-
         j           interrupt_dispatch           		# jump to interrupt_dispatch
 
 enter_int:
         sw          $a1, STATION_ENTER_ACK        		# Ack it
+<<<<<<< HEAD
 
 chase_station:
 		li	    	$a1, 1
 		sw	    	$a1, station_up
+=======
+		li	    	$a1, 1
+		sb	    	$a1, station_up
+>>>>>>> 965e3d4102567a3ff66405f8457aafacf88e11c6
   		j           interrupt_dispatch            		# jump to interrupt_dispatch
 
 bonk_interrupt:
         sw          $a1, BONK_ACK               		# acknowledge interrupt
         # jal         standby                     		# jump to standby and save position to $ra
+<<<<<<< HEAD
 standby:
         li        	$t0, 10               				# $t0 = 10
         sw        	$t0, VELOCITY         				#
@@ -855,6 +909,8 @@ sb_end:
         sw        $t0, VELOCITY
 
         # jr        $ra                       			# jump to
+=======
+>>>>>>> 965e3d4102567a3ff66405f8457aafacf88e11c6
         j           interrupt_dispatch              	# see if other interrupts are waiting
 
 non_intrpt:												# was some non-interrupt
