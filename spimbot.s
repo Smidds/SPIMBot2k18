@@ -77,75 +77,75 @@ WAIT_STATION_Y				= 100
 .text
 main:
         # put your code here :)
-		la 		$t0, isFrozen
-		lb 		$t0, 0($t0)
-		bne 	$t0, 1, else1				# Check if we're frozen
-
-		jal 	solvePuzzle
-		sb 		$0, isFrozen				# State that we're not frozen anymore
-
-		j 		main
-	else1:
-	 	la 		$t0, station_up
-		la 		$t1, have_dropped_off
-	 	lb 		$t0, 0($t0)
-		lb 		$t1, 0($t1)
-		not 	$t1, $t1 					# $t1 = !have_dropped_off <-- will be true if we haven't dropped off yet
-		and 	$t0, $t0, $t1 				# If station_up AND we haven't dropped off yet, we should take care of that
-	 	bne 	$t0, 1, else2				# Check if station is up
-
-  		jal 	chase_station_extract
-
-	 	j		main
-
-	else2:
-		la 		$t0, station_down
-		lb 		$t0, 0($t0)
-		bne 	$t0, 1, else3				# Check if station is down
-
-		##############################
-		##  Do whatever we do here   #
-		##############################
-
-		# j		main
-	else3:
-		li 		$t0, LOW_ALT_WARN
-		lw 		$t1, BOT_X
-		blt 	$t0, $t1, else4				# Check if our altitude is too low and abort
-
-		##############################
-		##  Correct altitutde here   #
-		##############################
-
-		# j 		main
-	else4:
-		li 		$t0, LOW_ENERGY_WARN
-		lw 		$t1, GET_ENERGY
-		blt 	$t0, $t1, else5				# Check if our energy is too low and abort
-
-		##############################
-		##  Handle low energy here   #
-		##############################
-
-		# j 		main
-	else5:
-		lw 		$t0, OTHER_BOT_X
-		slt 	$t0, 70
-		bne 	$t0, 1, else_done					# Check if the other bot is low enough to screw with them.
-
-		##############################
-		##  Evil puzzle stuff here   #
-		##############################
-
-		j 		main
-	else_done:
 		sub     $sp, $sp, 20        				# get some space
 		sw      $s0, 0($sp)         				#
 		sw      $s1, 4($sp)         				#
 		sw      $s2, 8($sp)         				#
 		sw      $s3, 12($sp)        				#
-		sw      $ra, 16($sp)
+		sw      $ra, 16($sp)						#
 
+		la 		$s0, isFrozen
+		lb 		$s0, 0($s0)
+		bne 	$s0, 1, else1						# Check if we're frozen
+
+		jal 	solvePuzzle
+		sb 		$0, isFrozen						# State that we're not frozen anymore
+
+		j 		end
+	else1:
+	 	la 		$s0, station_up
+		la 		$s1, have_dropped_off
+	 	lb 		$s0, 0($s0)
+		lb 		$s1, 0($s1)
+		not 	$s1, $s1 							# $s1 = !have_dropped_off <-- will be true if we haven't dropped off yet
+		and 	$s0, $s0, $s1 						# If station_up AND we haven't dropped off yet, we should take care of that
+	 	bne 	$s0, 1, else2						# Check if station is up
+
+  		jal 	chase_station_extract
+
+	 	j		end
+
+	else2:
+		la 		$s0, station_down
+		lb 		$s0, 0($s0)
+		bne 	$s0, 1, else3						# Check if station is down
+
+		##############################
+		##  Do whatever we do here   #
+		##############################
+
+		# j		end
+	else3:
+		li 		$s0, LOW_ALT_WARN
+		lw 		$s1, BOT_X
+		blt 	$s0, $s1, else4						# Check if our altitude is too low and abort
+
+		##############################
+		##  Correct altitutde here   #
+		##############################
+
+		# j 	end
+	else4:
+		li 		$s0, LOW_ENERGY_WARN
+		lw 		$s1, GET_ENERGY
+		blt 	$s0, $s1, else5						# Check if our energy is too low and abort
+
+		##############################
+		##  Handle low energy here   #
+		##############################
+
+		# j 	end
+	else5:
+		lw 		$s0, OTHER_BOT_X
+		slt 	$s0, 70
+		bne 	$s0, 1, else_done					# Check if the other bot is low enough to screw with them.
+
+		##############################
+		##  Evil puzzle stuff here   #
+		##############################
+
+		j 		end
+	else_done:
 		jal     findNearest         				# findNearest
 		move    $s2, $v0            				# $a0 = $v
 		lw      $s0, GET_CARGO       				# $s0 = cargo_amount
