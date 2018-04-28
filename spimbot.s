@@ -137,42 +137,43 @@ main:
 		##  Evil puzzle stuff here   #
 		##############################
 
+		j 		main
 	else_done:
-		sub        $sp, $sp, 20        				# get some space
-		sw         $s0, 0($sp)         				#
-		sw         $s1, 4($sp)         				#
-		sw         $s2, 8($sp)         				#
-		sw         $s3, 12($sp)        				#
-		sw         $ra, 16($sp)
+		sub     $sp, $sp, 20        				# get some space
+		sw      $s0, 0($sp)         				#
+		sw      $s1, 4($sp)         				#
+		sw      $s2, 8($sp)         				#
+		sw      $s3, 12($sp)        				#
+		sw      $ra, 16($sp)
 
-		jal        findNearest         				# findNearest
-		move       $s2, $v0            				# $a0 = $v
-		lw         $s0, GET_CARGO       			# $s0 = cargo_amount
-		add        $s0, $s0, $v1        			# $s0 = cargo_amount + best_points
-		li         $s1, 126             			# $s1 = 126
-		bge        $s0, $s1, enable_int_station 	# if $s0 >= $s1 then enable_int
-		li         $s0, 0               			# $s0 = 0
-		mtc0       $s0, $12             			# disable to global interrupt signal
-		move       $a0, $s2             			# $a0 = $s0
-		jal        chase                  			# chase
-    	sw         $s0, COLLECT_ASTEROID
+		jal     findNearest         				# findNearest
+		move    $s2, $v0            				# $a0 = $v
+		lw      $s0, GET_CARGO       				# $s0 = cargo_amount
+		add     $s0, $s0, $v1        				# $s0 = cargo_amount + best_points
+		li      $s1, 126             				# $s1 = 126
+		bge     $s0, $s1, enable_int_station 		# if $s0 >= $s1 then enable_int
+		li      $s0, 0               				# $s0 = 0
+		mtc0    $s0, $12             				# disable to global interrupt signal
+		move    $a0, $s2             				# $a0 = $s0
+		jal     chase                  				# chase
+    	sw      $s0, COLLECT_ASTEROID
 
-    	j          end                    			# jump to end
+    	j       end                    				# jump to end
 
 	enable_int_station:
-		li        $s0, STATION_EXIT_INT_MASK        # $s0 = STATION_EXIT_INT_MASK
-		or        $s0, $s0, STATION_ENTER_INT_MASK  # $s0 += STATION_ENTER_INT_MASK
-		or        $s0, $s0, BONK_INT_MASK
-		or        $s0, $s0, 1
-		mtc0      $s0, $12
+		li      $s0, STATION_EXIT_INT_MASK        	# $s0 = STATION_EXIT_INT_MASK
+		or      $s0, $s0, STATION_ENTER_INT_MASK  	# $s0 += STATION_ENTER_INT_MASK
+		or      $s0, $s0, BONK_INT_MASK
+		or      $s0, $s0, 1
+		mtc0    $s0, $12
 
 	end:
-		lw         $s0, 0($sp)
-		lw         $s1, 4($sp)
-		lw         $s2, 8($sp)
-		lw         $s3, 12($sp)
-		lw         $ra, 16($sp)
-		add        $sp, $sp, 20
+		lw      $s0, 0($sp)
+		lw      $s1, 4($sp)
+		lw      $s2, 8($sp)
+		lw      $s3, 12($sp)
+		lw      $ra, 16($sp)
+		add     $sp, $sp, 20
 		# note that we infinite loop to avoid stopping the simulation early
 		j       main
 
