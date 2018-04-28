@@ -158,14 +158,14 @@ main:
     	sw         $s0, COLLECT_ASTEROID
 
     	j          end                    			# jump to end
-	
+
 	enable_int_station:
 		li        $s0, STATION_EXIT_INT_MASK        # $s0 = STATION_EXIT_INT_MASK
 		or        $s0, $s0, STATION_ENTER_INT_MASK  # $s0 += STATION_ENTER_INT_MASK
 		or        $s0, $s0, BONK_INT_MASK
 		or        $s0, $s0, 1
 		mtc0      $s0, $12
-	
+
 	end:
 		lw         $s0, 0($sp)
 		lw         $s1, 4($sp)
@@ -838,6 +838,9 @@ exit_int:
 
 enter_int:
         sw          $a1, STATION_ENTER_ACK        		# Ack it
+<<<<<<< HEAD
+
+chase_station:
 		li	    	$a1, 1
 		sb	    	$a1, station_up						# Set station_up to true
 		li	    	$a1, 0								
