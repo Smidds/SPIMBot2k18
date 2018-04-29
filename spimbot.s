@@ -94,6 +94,7 @@ main:
 	or      $s0, $s0, 1
 	mtc0    $s0, $12
 
+
 	else_begin:
 		la 		$s0, isFrozen
 		lb 		$s0, 0($s0)
@@ -148,7 +149,7 @@ main:
 		lb 		$s1, 0($s1)
 		not 	$s1, $s1 							# $s1 = !have_dropped_off <-- will be true if we haven't dropped off yet
 		and 	$s0, $s0, $s1 						# If station_up AND we haven't dropped off yet, we should take care of that
-	 	bne 	$s0, 1, else5						# Check if station is up
+	 	bne 	$s0, 1, else3						# Check if station is up
 
 		# CHANGE else5 to else2 once we have else2 finished !!!!!!
 
@@ -194,9 +195,18 @@ main:
 
 		# j		else_begin
 	else3:
+	# If bot x is below altitude go to the right
 		li 		$s0, LOW_ALT_WARN
 		lw 		$s1, BOT_X
 		blt 	$s0, $s1, else5						# Check if our altitude is too low and abort
+
+		li      $a0, 0xfa0000
+		lw 			$s1, BOT_Y									# (250, y)
+		or			$a0, $a0, $s1
+		jal			move_bot				# jump to move_bot and save position to $ra
+
+		j				else_begin				# jump to else begin
+
 
 		# Note i'm skipping else4 cuz I moved it to the top
 
@@ -263,6 +273,8 @@ main:
 		li		$s0, 0								# station is gone,
 		la		$s1, have_dropped_off				# lower the flag
 		sb		$s0, 0($s1)							#
+
+
 
 	end:
 		# note that we infinite loop to avoid stopping the simulation early
@@ -511,7 +523,7 @@ FN_end:
 # }
 
 solvePuzzle:
-        sub		$sp, $sp, 8						# Sub off our stack
+    sub		$sp, $sp, 8						# Sub off our stack
 		sw 		$ra, 0($sp) 					# Protect the $ra
 		sw 		$t0, 4($sp) 					# Protect the $t0
 
