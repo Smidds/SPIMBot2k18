@@ -102,14 +102,14 @@ main:
 	 	bne 	$s0, 1, else4						# Check if station is up
 
 		lw      $t0, STATION_LOC        			#
-    srl     $t1, $t0, 16            			# $t1 = STATION_LOC.x
-    and     $t2, $t0, 0x0000ffff    			# $t2 = STATION_LOC.y
-    lw      $t3, BOT_X              			# $t3 = BOT_X
-    lw      $t4, BOT_Y              			# $t4 = BOT_Y
+        srl     $t1, $t0, 16            			# $t1 = STATION_LOC.x
+        and     $t2, $t0, 0x0000ffff    			# $t2 = STATION_LOC.y
+        lw      $t3, BOT_X              			# $t3 = BOT_X
+        lw      $t4, BOT_Y              			# $t4 = BOT_Y
 
-    bne     $t1, $t3, else1_cont          		# if station.x != bot.x then goEW
-    bne     $t2, $t4, else1_cont          		# if station.y != bot.y then goSN
-    sw      $t0, DROPOFF_ASTEROID   			# now the bot should overlap the station
+        bne     $t1, $t3, else1_cont          		# if station.x != bot.x then goEW
+        bne     $t2, $t4, else1_cont          		# if station.y != bot.y then goSN
+        sw      $t0, DROPOFF_ASTEROID   			# now the bot should overlap the station
 
 		li 		$s1, 1
 		la		$s0, have_dropped_off				# we are going to drop off asteroid
@@ -156,11 +156,11 @@ main:
 		li 		$s0, LOW_ENERGY_WARN
 		lw 		$s1, GET_ENERGY
 
-		add   $s6, $s6, 1
+		add   	$s6, $s6, 1
 		blt 	$s0, $s1, else_done						# Check if our energy is too low and abort
 		li		$a0, 0
-		jal		standby				# jump to  and save position to $ra
 
+		jal 	standby
 		# jal   solvePuzzle
 		add   $s7, $s7, 1
 
@@ -838,14 +838,13 @@ standby:
         li        	$t0, 10               				# $t0 = 10
         sw        	$t0, VELOCITY         				#
 
-        li          $t0, 0x960032           			# (150, 50)
+        li          $t0, 0xfa0032           			# (150, 50)
         srl         $t1, $t0, 16            			# $t1 = STATION_LOC.x
         and         $t2, $t0, 0x0000ffff    			# $t2 = STATION_LOC.y
         lw          $t3, BOT_X              			# $t3 = BOT_X
         lw          $t4, BOT_Y              			# $t4 = BOT_Y
         li          $t5, 290                			# $t5 = 290
         bgt         $t1, $t5, sb_end        			# if station.x > 290 then
-
 
         bne         $t1, $t3, sb_goEW          			# if station.x != bot.x then goEW
         bne         $t2, $t4, sb_goSN          			# if station.y != bot.y then goSN
@@ -884,7 +883,7 @@ standby:
         j         	sb_loop                  				# jump to cs_loop
 
 	sb_loop:
-        j         	standby             					# jump to chase_station
+        j         	sb_end             					# jump to chase_station
 	sb_end:
         li        	$t0, 0        						# $t0 = 180
         sw        	$t0, ANGLE
