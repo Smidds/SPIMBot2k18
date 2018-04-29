@@ -125,7 +125,7 @@ main:
 
 	 	j		else_begin
 
-		add		$s5, $s5, 1	
+		add		$s5, $s5, 1
 
 	 	j		  else_done
 
@@ -160,7 +160,8 @@ main:
 		blt 	$s0, $s1, else_done						# Check if our energy is too low and abort
 		li		$a0, 0
 
-		jal   solvePuzzle
+		jal		standby				# jump to standby and save position to $ra
+		# jal   solvePuzzle
 		add   $s7, $s7, 1
 
 		##############################
@@ -189,7 +190,7 @@ main:
 		mtc0    $s0, $12             				# disable to global interrupt signal
 		move    $a0, $s2             				# $a0 = $s0
 		jal     move_bot                  			# chase
-		
+
     	sw      $s0, COLLECT_ASTEROID
 
     j       end                    				# jump to end
