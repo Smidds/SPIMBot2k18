@@ -123,7 +123,7 @@ main:
 		or			$a0, $a0, $s1
 		jal			move_bot				# jump to move_bot and save position to $ra
 
-		#jal solvePuzzle
+		jal 	solvePuzzle
 		sb			$0, fuel_requested
 
 
@@ -227,9 +227,9 @@ main:
 	# 	# li		$a0, 0
 	# 	# jal   solvePuzzle
 	# 	# add   $s7, $s7, 1
-	#		
+	#
 	# 	# j 	else_begin
-		
+
 	else5:
 		lw 		$s0, OTHER_BOT_X
 		slt 	$s0, 70
@@ -248,8 +248,8 @@ main:
 		add     $s0, $s0, $v1        				# $s0 = cargo_amount + best_points
 		li      $s1, 128             				# $s1 = 128
 		bge     $s0, $s1, enable_int_station 		# if $s0 >= 128 then enable_int
-		li      $s0, 0               				# $s0 = 0
-		mtc0    $s0, $12             				# disable to global interrupt signal
+		# li      $s0, 0               				# $s0 = 0
+		# mtc0    $s0, $12             				# disable to global interrupt signal
 		move    $a0, $s2             				# $a0 = $s0
 		jal     move_bot                  			# chase
 
