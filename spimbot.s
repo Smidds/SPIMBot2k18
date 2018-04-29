@@ -459,8 +459,8 @@ solvePuzzle:
 
 		la 		$t0, puzzle_data
 
-		lw      $a0, 0(puzzle_data)             # s0 = canvas
-        lw      $a1, 16(puzzle_data)            # s1 = lines
+		lw      $a0, 0($t0)             		# s0 = canvas
+        lw      $a1, 16($t0)            		# s1 = lines
         la      $a2, puzzle_solution           	# s2 = solution
         
         jal     count_disjoint_regions
