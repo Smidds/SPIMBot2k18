@@ -84,6 +84,14 @@ main:
 	sw      $s2, 8($sp)         				#
 	sw      $s3, 12($sp)        				#
 
+	li      $s0, STATION_EXIT_INT_MASK        		# $s0 = STATION_EXIT_INT_MASK
+	or      $s0, $s0, STATION_ENTER_INT_MASK  		# $s0 += STATION_ENTER_INT_MASK
+	or      $s0, $s0, BONK_INT_MASK
+	or 		$s0, $s0, REQUEST_PUZZLE_INT_MASK
+	or 		$s0, $s0, BOT_FREEZE_INT_MASK
+	or      $s0, $s0, 1
+	mtc0    $s0, $12
+
 	else_begin:
 		la 		$s0, isFrozen
 		lb 		$s0, 0($s0)
@@ -124,7 +132,7 @@ main:
 		lb		$s0, 0($s0)
 
 		beq		$s0, 1, else1
-		li		$s0, 1
+		la 		$s0, puzzle_data
 		sw		$s0, REQUEST_PUZZLE
 		sb		$s0, fuel_requested		#
 
@@ -219,16 +227,16 @@ main:
 	# 	# li		$a0, 0
 	# 	# jal   solvePuzzle
 	# 	# add   $s7, $s7, 1
-	#
+	#		
 	# 	# j 	else_begin
-
+		
 	else5:
 		lw 		$s0, OTHER_BOT_X
 		slt 	$s0, 70
 		bne 	$s0, 1, else_done					# Check if the other bot is low enough to screw with them.
 
 		##############################
-		##  Evil puzzle stuff here   #
+		##  Evil puzzle stuff here  		 #
 		##############################
 
 		# j 		else_begin
@@ -253,12 +261,6 @@ main:
 		li		$s0, 0								# station is gone,
 		la		$s1, have_dropped_off				# lower the flag
 		sb		$s0, 0($s1)							#
-		# jal 	standby
-		li      $s0, STATION_EXIT_INT_MASK        	# $s0 = STATION_EXIT_INT_MASK
-		or      $s0, $s0, STATION_ENTER_INT_MASK  	# $s0 += STATION_ENTER_INT_MASK
-		or      $s0, $s0, BONK_INT_MASK
-		or      $s0, $s0, 1
-		mtc0    $s0, $12
 
 	end:
 		# note that we infinite loop to avoid stopping the simulation early
