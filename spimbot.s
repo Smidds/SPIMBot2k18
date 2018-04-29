@@ -73,6 +73,7 @@ WAIT_STATION_Y				= 100
 	station_down: 				.space 	1
 	isFrozen:					.space 	1
 	puzzleReady:				.space 	1
+	fuel_requested:			.space  1
 
 .text
 main:
@@ -86,12 +87,50 @@ main:
 	else_begin:
 		la 		$s0, isFrozen
 		lb 		$s0, 0($s0)
-		bne 	$s0, 1, else1						# Check if we're frozen
+		bne 	$s0, 1, else_get_fueled						# Check if we're frozen
 
 		jal 	solvePuzzle
 		sb 		$0, isFrozen						# State that we're not frozen anymore
 
 		j 		else_begin
+
+	else_get_fueled:
+		# checks if puzzle is ready and we need to refuel.
+		# we move to standby (250, bot.y) and solve puzzle
+		la		$s0, puzzleReady
+		lb		$s0, 0($s0)
+
+		bne		$s0, 1, else_request_fuel_hold
+
+		add   $s6, $s6, 1
+
+		li 		$s0, LOW_ENERGY_WARN
+		lw 		$s1, GET_ENERGY
+
+		blt 	$s0, $s1, else_request_fuel_hold						# Check if our energy is too low
+
+
+		li      $a0, 0xfa0000
+		lw 			$s1, BOT_Y									# (250, y)
+		or			$a0, $a0, $s1
+		jal			move_bot				# jump to move_bot and save position to $ra
+
+		#jal solvePuzzle
+		sb			$0, fuel_requested
+
+
+	else_request_fuel_hold:
+		la		$s0, fuel_requested
+		lb		$s0, 0($s0)
+
+		beq		$s0, 1, else1
+		li		$s0, 1
+		sw		$s0, REQUEST_PUZZLE
+		sb		$s0, fuel_requested		#
+
+		add   $s7, $s7, 1
+
+
 	else1:
 	 	la 		$s0, station_up
 		la 		$s1, have_dropped_off
@@ -99,17 +138,19 @@ main:
 		lb 		$s1, 0($s1)
 		not 	$s1, $s1 							# $s1 = !have_dropped_off <-- will be true if we haven't dropped off yet
 		and 	$s0, $s0, $s1 						# If station_up AND we haven't dropped off yet, we should take care of that
-	 	bne 	$s0, 1, else4						# Check if station is up
+	 	bne 	$s0, 1, else5						# Check if station is up
+
+		# CHANGE else5 to else2 once we have else2 finished !!!!!!
 
 		lw      $t0, STATION_LOC        			#
-        srl     $t1, $t0, 16            			# $t1 = STATION_LOC.x
-        and     $t2, $t0, 0x0000ffff    			# $t2 = STATION_LOC.y
-        lw      $t3, BOT_X              			# $t3 = BOT_X
-        lw      $t4, BOT_Y              			# $t4 = BOT_Y
+    srl     $t1, $t0, 16            			# $t1 = STATION_LOC.x
+    and     $t2, $t0, 0x0000ffff    			# $t2 = STATION_LOC.y
+    lw      $t3, BOT_X              			# $t3 = BOT_X
+    lw      $t4, BOT_Y              			# $t4 = BOT_Y
 
-        bne     $t1, $t3, else1_cont          		# if station.x != bot.x then goEW
-        bne     $t2, $t4, else1_cont          		# if station.y != bot.y then goSN
-        sw      $t0, DROPOFF_ASTEROID   			# now the bot should overlap the station
+    bne     $t1, $t3, else1_cont          		# if station.x != bot.x then goEW
+    bne     $t2, $t4, else1_cont          		# if station.y != bot.y then goSN
+    sw      $t0, DROPOFF_ASTEROID   			# now the bot should overlap the station
 
 		li 		$s1, 1
 		la		$s0, have_dropped_off				# we are going to drop off asteroid
@@ -145,30 +186,42 @@ main:
 	else3:
 		li 		$s0, LOW_ALT_WARN
 		lw 		$s1, BOT_X
-		blt 	$s0, $s1, else4						# Check if our altitude is too low and abort
+		blt 	$s0, $s1, else5						# Check if our altitude is too low and abort
+
+		# Note i'm skipping else4 cuz I moved it to the top
 
 		##############################
 		##  Correct altitutde here   #
 		##############################
 
 		# j 	else_begin
-	else4:
-		li 		$s0, LOW_ENERGY_WARN
-		lw 		$s1, GET_ENERGY
+	# else4:
+	# 	li 		$s0, LOW_ENERGY_WARN
+	# 	lw 		$s1, GET_ENERGY
+	#
+	# 	add   	$s6, $s6, 1
+	# 	blt 	$s0, $s1, else_done						# Check if our energy is too low and abort
+	# 	li		$a0, 0
+	#
+	# 	jal 	standby
+	# 	# jal   solvePuzzle
+	# 	add   $s7, $s7, 1
+	#
+	# 	##############################
+	# 	##  Handle low energy here   #
+	# 	##############################
+	#
+	# 	li      $a0, 0xfa0000           			# (250, y)
+	# 	lw 			$s1, BOT_X
+	# 	or			$a0, $a0, $s1
+	# 	jal			move_bot				# jump to move_bot and save position to $ra
+	#
+	# 	# li		$a0, 0
+	# 	# jal   solvePuzzle
+	# 	# add   $s7, $s7, 1
+	#
+	# 	# j 	else_begin
 
-		add   	$s6, $s6, 1
-		blt 	$s0, $s1, else_done						# Check if our energy is too low and abort
-		li		$a0, 0
-
-		jal 	standby
-		# jal   solvePuzzle
-		add   $s7, $s7, 1
-
-		##############################
-		##  Handle low energy here   #
-		##############################
-
-		# j 	else_begin
 	else5:
 		lw 		$s0, OTHER_BOT_X
 		slt 	$s0, 70
@@ -178,7 +231,8 @@ main:
 		##  Evil puzzle stuff here   #
 		##############################
 
-		j 		else_begin
+		# j 		else_begin
+
 	else_done:
 		jal     findNearest         				# findNearest
 		move    $s2, $v0            				# $a0 = $v
