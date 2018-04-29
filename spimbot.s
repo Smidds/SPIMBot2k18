@@ -57,7 +57,7 @@ BOT_FREEZE_ACK              = 0xffff00e4
 ## Global Constants
 LOW_ALT_WARN				= 50
 SAFE_ALT					= 90
-LOW_ENERGY_WARN				= 200
+LOW_ENERGY_WARN				= 600
 WAIT_STATION_X		        = 100
 WAIT_STATION_Y				= 100
 
@@ -76,14 +76,14 @@ WAIT_STATION_Y				= 100
 
 .text
 main:
-        # put your code here :)
-		sub     $sp, $sp, 20        				# get some space
-		sw      $s0, 0($sp)         				#
-		sw      $s1, 4($sp)         				#
-		sw      $s2, 8($sp)         				#
-		sw      $s3, 12($sp)        				#
-		sw      $ra, 16($sp)						#
+	# put your code here :)
+	sub     $sp, $sp, 16        				# get some space
+	sw      $s0, 0($sp)         				#
+	sw      $s1, 4($sp)         				#
+	sw      $s2, 8($sp)         				#
+	sw      $s3, 12($sp)        				#
 
+	else_begin:
 		la 		$s0, isFrozen
 		lb 		$s0, 0($s0)
 		bne 	$s0, 1, else1						# Check if we're frozen
@@ -91,7 +91,7 @@ main:
 		jal 	solvePuzzle
 		sb 		$0, isFrozen						# State that we're not frozen anymore
 
-		j 		end
+		j 		else_begin
 	else1:
 	 	la 		$s0, station_up
 		la 		$s1, have_dropped_off
@@ -99,7 +99,7 @@ main:
 		lb 		$s1, 0($s1)
 		not 	$s1, $s1 							# $s1 = !have_dropped_off <-- will be true if we haven't dropped off yet
 		and 	$s0, $s0, $s1 						# If station_up AND we haven't dropped off yet, we should take care of that
-	 	bne 	$s0, 1, else2						# Check if station is up
+	 	bne 	$s0, 1, else4						# Check if station is up
 
 		lw      $t0, STATION_LOC        			#
         srl     $t1, $t0, 16            			# $t1 = STATION_LOC.x
@@ -123,7 +123,11 @@ main:
 
     else1_end:
 
-	 	j		end
+	 	j		else_begin
+
+		add		$s5, $s5, 1	
+
+	 	j		  else_done
 
 	else2:
 		la 		$s0, station_down
@@ -137,7 +141,7 @@ main:
 		##  Do whatever we do here   #
 		##############################
 
-		# j		end
+		# j		else_begin
 	else3:
 		li 		$s0, LOW_ALT_WARN
 		lw 		$s1, BOT_X
@@ -147,17 +151,23 @@ main:
 		##  Correct altitutde here   #
 		##############################
 
-		# j 	end
+		# j 	else_begin
 	else4:
 		li 		$s0, LOW_ENERGY_WARN
 		lw 		$s1, GET_ENERGY
-		blt 	$s0, $s1, else5						# Check if our energy is too low and abort
+
+		add   $s6, $s6, 1
+		blt 	$s0, $s1, else_done						# Check if our energy is too low and abort
+		li		$a0, 0
+
+		jal   solvePuzzle
+		add   $s7, $s7, 1
 
 		##############################
 		##  Handle low energy here   #
 		##############################
 
-		# j 	end
+		# j 	else_begin
 	else5:
 		lw 		$s0, OTHER_BOT_X
 		slt 	$s0, 70
@@ -167,7 +177,7 @@ main:
 		##  Evil puzzle stuff here   #
 		##############################
 
-		# j 		end
+		j 		else_begin
 	else_done:
 		jal     findNearest         				# findNearest
 		move    $s2, $v0            				# $a0 = $v
@@ -182,7 +192,7 @@ main:
 		
     	sw      $s0, COLLECT_ASTEROID
 
-    	j       end                    				# jump to end
+    j       end                    				# jump to end
 
 	enable_int_station:
 		li		$s0, 0								# station is gone,
@@ -196,14 +206,8 @@ main:
 		mtc0    $s0, $12
 
 	end:
-		lw      $s0, 0($sp)
-		lw      $s1, 4($sp)
-		lw      $s2, 8($sp)
-		lw      $s3, 12($sp)
-		lw      $ra, 16($sp)
-		add     $sp, $sp, 20
 		# note that we infinite loop to avoid stopping the simulation early
-		j       main
+		j       else_begin
 
 #--------------------------- END OF MAIN FUNCTION ----------------------------#
 
@@ -274,7 +278,8 @@ chase:
 		li        $t3, 1                        # $t3 = ANGLE_CONTROL = 1
 		sw        $t3, ANGLE_CONTROL            # set ANGLE_CONTROL
 
-		j         c_getToX                      # jump to getToX
+		#j         c_getToX                      # jump to getToX
+		jr				$ra
 
 	c_right:
 		li        $t3, 0                        # $t3 = 0
@@ -282,7 +287,9 @@ chase:
 		li        $t3, 1                        # $t3 = 1
 		sw        $t3, ANGLE_CONTROL            # set ANGLE_CONTROL
 
-		j         c_getToX                      # jump to getToX
+		#j         c_getToX                      # jump to getToX
+		jr				$ra					# jump to ra
+
 
 	c_getToY:
 		lw        $t1, BOT_Y                    # get the BOT_Y
@@ -295,7 +302,8 @@ chase:
 		li        $t3, 1                        # $t3 = 1
 		sw        $t3, ANGLE_CONTROL            # set ANGLE_CONTROL
 
-		j         c_getToX                      # jump to getToY
+		#j         c_getToX                      # jump to getToY
+		jr				$ra					# jump to $ra
 
 	c_down:
 		li        $t3, 90                       # $t3 = 90
@@ -303,7 +311,8 @@ chase:
 		li        $t3, 1                        # $t3 = 1
 		sw        $t3, ANGLE_CONTROL            # set ANGLE_CONTROL
 
-		j         c_getToX                      # jump to getToY
+		#j         c_getToX                      # jump to getToY
+		jr				$ra					# jump to $ra
 
 	c_adjust_x:
 		lw        $t1, BOT_X                    # get the BOT_X
@@ -316,7 +325,8 @@ chase:
 		li        $t3, 1                        # $t3 = ANGLE_CONTROL = 1
 		sw        $t3, ANGLE_CONTROL            # set ANGLE_CONTROL
 
-		j         c_adjust_x                    # jump to adjust_x
+		#j         c_adjust_x                    # jump to adjust_x
+		jr				$ra					# jump to $ra
 
 	c_adjust_x_right:
 		li        $t3, 0                        # $t3 = 0
@@ -324,7 +334,8 @@ chase:
 		li        $t3, 1                        # $t3 = 1
 		sw        $t3, ANGLE_CONTROL            # set ANGLE_CONTROL
 
-		j         c_adjust_x                    # jump to adjust_x
+		#j         c_adjust_x                    # jump to adjust_x
+		jr				$ra					# jump to 		$ra
 
 	c_end:
 		jr        $ra                          	# return
@@ -939,12 +950,12 @@ frozen_int:
 		la 			$a1, puzzle_data
 		sw 			$a1, BOT_FREEZE_ACK					# Ack it, yo
 		li 			$a1, 1
-		sb 			$a1, isFrozen						# Set isFrozen to true
+		sb 			$a1, isFrozen								# Set isFrozen to true
 		j 			interrupt_dispatch					# jump to interrupt_dispatch
 
 bonk_interrupt:
-        sw          $a1, BONK_ACK               		# acknowledge interrupt
-        j           interrupt_dispatch              	# see if other interrupts are waiting
+    sw          $a1, BONK_ACK               		# acknowledge interrupt
+    j           interrupt_dispatch              	# see if other interrupts are waiting
 
 
 non_intrpt:												# was some non-interrupt
