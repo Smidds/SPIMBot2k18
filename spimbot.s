@@ -518,7 +518,7 @@ solvePuzzle:
 		lw      $a0, 0($t0)             		# s0 = canvas
         lw      $a1, 16($t0)            		# s1 = lines
         la      $a2, puzzle_solution           	# s2 = solution
-        
+
         jal     count_disjoint_regions
 
 		li 		$t1, 1
@@ -640,7 +640,7 @@ count_disjoint_regions_step:
 		sw   $s2, 12($sp)
 		sw   $s3, 16($sp)
 		sw   $s4, 20($sp)
-		
+
 		move $s0, $a0							# Store params
 		move $s1, $a1
 
