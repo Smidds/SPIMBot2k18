@@ -102,14 +102,14 @@ main:
 	 	bne 	$s0, 1, else4						# Check if station is up
 
 		lw      $t0, STATION_LOC        			#
-        srl     $t1, $t0, 16            			# $t1 = STATION_LOC.x
-        and     $t2, $t0, 0x0000ffff    			# $t2 = STATION_LOC.y
-        lw      $t3, BOT_X              			# $t3 = BOT_X
-        lw      $t4, BOT_Y              			# $t4 = BOT_Y
+    srl     $t1, $t0, 16            			# $t1 = STATION_LOC.x
+    and     $t2, $t0, 0x0000ffff    			# $t2 = STATION_LOC.y
+    lw      $t3, BOT_X              			# $t3 = BOT_X
+    lw      $t4, BOT_Y              			# $t4 = BOT_Y
 
-        bne     $t1, $t3, else1_cont          		# if station.x != bot.x then goEW
-        bne     $t2, $t4, else1_cont          		# if station.y != bot.y then goSN
-        sw      $t0, DROPOFF_ASTEROID   			# now the bot should overlap the station
+    bne     $t1, $t3, else1_cont          		# if station.x != bot.x then goEW
+    bne     $t2, $t4, else1_cont          		# if station.y != bot.y then goSN
+    sw      $t0, DROPOFF_ASTEROID   			# now the bot should overlap the station
 
 		li 		$s1, 1
 		la		$s0, have_dropped_off				# we are going to drop off asteroid
@@ -159,8 +159,8 @@ main:
 		add   $s6, $s6, 1
 		blt 	$s0, $s1, else_done						# Check if our energy is too low and abort
 		li		$a0, 0
+		jal		standby				# jump to  and save position to $ra
 
-		jal		standby				# jump to standby and save position to $ra
 		# jal   solvePuzzle
 		add   $s7, $s7, 1
 
