@@ -76,14 +76,14 @@ WAIT_STATION_Y				= 100
 
 .text
 main:
-        # put your code here :)
-		sub     $sp, $sp, 20        				# get some space
-		sw      $s0, 0($sp)         				#
-		sw      $s1, 4($sp)         				#
-		sw      $s2, 8($sp)         				#
-		sw      $s3, 12($sp)        				#
-		sw      $ra, 16($sp)						#
+	# put your code here :)
+	sub     $sp, $sp, 16        				# get some space
+	sw      $s0, 0($sp)         				#
+	sw      $s1, 4($sp)         				#
+	sw      $s2, 8($sp)         				#
+	sw      $s3, 12($sp)        				#
 
+	else_begin:
 		la 		$s0, isFrozen
 		lb 		$s0, 0($s0)
 		bne 	$s0, 1, else1						# Check if we're frozen
@@ -91,7 +91,7 @@ main:
 		jal 	solvePuzzle
 		sb 		$0, isFrozen						# State that we're not frozen anymore
 
-		j 		end
+		j 		else_begin
 	else1:
 	 	la 		$s0, station_up
 		la 		$s1, have_dropped_off
@@ -103,7 +103,7 @@ main:
 
   		jal 	chase_station_extract
 
-	 	j		end
+	 	j		else_begin
 
 	else2:
 		la 		$s0, station_down
@@ -114,7 +114,7 @@ main:
 		##  Do whatever we do here   #
 		##############################
 
-		# j		end
+		# j		else_begin
 	else3:
 		li 		$s0, LOW_ALT_WARN
 		lw 		$s1, BOT_X
@@ -124,7 +124,7 @@ main:
 		##  Correct altitutde here   #
 		##############################
 
-		# j 	end
+		# j 	else_begin
 	else4:
 		li 		$s0, LOW_ENERGY_WARN
 		lw 		$s1, GET_ENERGY
@@ -134,7 +134,7 @@ main:
 		##  Handle low energy here   #
 		##############################
 
-		# j 	end
+		# j 	else_begin
 	else5:
 		lw 		$s0, OTHER_BOT_X
 		slt 	$s0, 70
@@ -144,7 +144,7 @@ main:
 		##  Evil puzzle stuff here   #
 		##############################
 
-		j 		end
+		j 		else_begin
 	else_done:
 		jal     findNearest         				# findNearest
 		move    $s2, $v0            				# $a0 = $v
@@ -168,14 +168,8 @@ main:
 		mtc0    $s0, $12
 
 	end:
-		lw      $s0, 0($sp)
-		lw      $s1, 4($sp)
-		lw      $s2, 8($sp)
-		lw      $s3, 12($sp)
-		lw      $ra, 16($sp)
-		add     $sp, $sp, 20
 		# note that we infinite loop to avoid stopping the simulation early
-		j       main
+		j       else_begin
 
 #--------------------------- END OF MAIN FUNCTION ----------------------------#
 
@@ -839,7 +833,6 @@ exit_int:
 
 enter_int:
         sw          $a1, STATION_ENTER_ACK        		# Ack it
-<<<<<<< HEAD
 
 chase_station:
 		li	    	$a1, 1
