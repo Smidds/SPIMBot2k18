@@ -65,8 +65,8 @@ WAIT_STATION_Y				= 100
 .data
 .align 2
 	asteroid_map_address: 		.space 	1024
-	puzzle_data:				.space 	336			## Looks like Puzzle is this big
-	thrown_puzzle_data:			.space 	336			## Looks like Puzzle is this big
+	puzzle_data:				.space 	1024		## Looks like Puzzle is this big
+	thrown_puzzle_data:			.space 	1024		## Looks like Puzzle is this big
 	puzzle_solution:			.space	8
 	station_up:   				.space 	1
 	have_dropped_off:   		.space 	1
@@ -440,16 +440,33 @@ FN_end:
 #   $a0 = 0 -> energize | 1 -> evil             #
 #                                               #
 #################################################
+
+# Struct Puzzle{
+# 	// Canvas
+# 	Canvas canvas;																		<--- 16B
+# 	// Lines (at offset 16)
+# 	Lines lines;																		<--- 16B
+# 	// The rest of the struct stores the actual data for canvas and lines.
+# 	// You should not need to know the exact format of this field.
+# 	// You should access data following the pointers in canvas and coords.
+# 	unsigned char[300] data;															<--- 332 ish-B
+# }
+
 solvePuzzle:
-        sub		$sp, $sp, 8						# Sub off our stack here as we handle stuff
+        sub		$sp, $sp, 8						# Sub off our stack
 		sw 		$ra, 0($sp) 					# Protect the $ra
 		sw 		$t0, 4($sp) 					# Protect the $t0
 
-		#############################
-		##  Solve the puzzle here   #
-		#############################
+		la 		$t0, puzzle_data
 
-		beq 	$a0, $0, puzzle_continue		# If $a0 = 0 skip setting the throw bit
+		lw      $a0, 0(puzzle_data)             # s0 = canvas
+        lw      $a1, 16(puzzle_data)            # s1 = lines
+        la      $a2, puzzle_solution           	# s2 = solution
+        
+        jal     count_disjoint_regions
+
+		li 		$t1, 1
+		bne 	$a0, $t1, puzzle_continue		# If $a0 != 1 skip setting the throw bit
 		sw 		$a1, THROW_PUZZLE
 	puzzle_continue:
 		la 		$t0, puzzle_solution
@@ -459,9 +476,8 @@ solvePuzzle:
 
 		lw 		$ra, 0($sp) 					# Restore the $ra
 		lw 		$t0, 4($sp) 					# Restore the $t0
-		add		$sp, $sp, 8						# Sub off our stack here as we handle stuff
+		add		$sp, $sp, 8						# Close off our stack
 		jr 		$ra
-
 
 #################################################
 # count_disjoint_regions:                       #
@@ -568,6 +584,7 @@ count_disjoint_regions_step:
 		sw   $s2, 12($sp)
 		sw   $s3, 16($sp)
 		sw   $s4, 20($sp)
+		
 		move $s0, $a0							# Store params
 		move $s1, $a1
 
@@ -646,76 +663,75 @@ count_disjoint_regions_step:
 #                                               #
 #################################################
 flood_fill:
-        # Your code goes here :)
-        slt  $t0, $a0, 0                        # $t0 = row < 0
-		beq  $t0, 1, ff_end						# If row < 0 is true, exit
-        slt  $t0, $a1, 0                        # $t0 = col < 0
-		beq  $t0, 1, ff_end						# If col < 0 is true, exit
-		lw   $t0, 0($a3)						# $t0 = canvas->height
-		bge  $a0, $t0, ff_end					# If row >= canvas->height is false, exit
-		lw   $t0, 4($a3)						# $t0 = canvas->width
-		bge  $a1, $t0, ff_end					# If row >= canvas->width is false, exit
+		# Your code goes here :)
+        slt  	$t0, $a0, 0                     # $t0 = row < 0
+		beq  	$t0, 1, ff_end					# If row < 0 is true, exit
+        slt  	$t0, $a1, 0                     # $t0 = col < 0
+		beq  	$t0, 1, ff_end					# If col < 0 is true, exit
+		lw   	$t0, 0($a3)						# $t0 = canvas->height
+		bge  	$a0, $t0, ff_end				# If row >= canvas->height is false, exit
+		lw   	$t0, 4($a3)						# $t0 = canvas->width
+		bge  	$a1, $t0, ff_end				# If row >= canvas->width is false, exit
 	ff_false:
-		lw   $t0, 12($a3)						# $t0 = &(canvas->canvas)
-		mul  $t1, $a0, 4						# Get the true "row" index
-		add  $t0, $t0, $t1						# $t0 = &canvas->canvas[row]
-		lw   $t0, 0($t0)						# $t0 = canvas->canvas[row]
-		add  $t0, $t0, $a1						# $t0 = &canvas->canvas[row][col]
+		lw   	$t0, 12($a3)					# $t0 = &(canvas->canvas)
+		mul  	$t1, $a0, 4						# Get the true "row" index
+		add  	$t0, $t0, $t1					# $t0 = &canvas->canvas[row]
+		lw   	$t0, 0($t0)						# $t0 = canvas->canvas[row]
+		add  	$t0, $t0, $a1					# $t0 = &canvas->canvas[row][col]
 
-		lb   $t1, 0($t0)						# $t1 = canvas->canvas[row][col] // $t1 = curr
-		lb 	 $t3, 8($a3)						# $t3 = canvas->marker
+		lb   	$t1, 0($t0)						# $t1 = canvas->canvas[row][col] // $t1 = curr
+		lb 	 	$t3, 8($a3)						# $t3 = canvas->marker
 
-		beq  $t1, $t3, ff_end					# If curr != canvas->pattern, bail
-		beq  $t1, $a2, ff_end					# If curr != marker, bail
+		beq  	$t1, $t3, ff_end				# If curr != canvas->pattern, bail
+		beq  	$t1, $a2, ff_end				# If curr != marker, bail
 
-		sub  $sp, $sp, 20						# Build that register, SON!
-        sw   $ra, 0($sp)						# ... and store $ra while yer at it
+		sb   	$a2, 0($t0)						# canvas->canvas[row][col] = marker
 
-		sb   $a2, 0($t0)						# canvas->canvas[row][col] = marker
+		sub 	$sp, $sp, 20					# Build that register, SON!
+		sw 		$ra, 0($sp)						# ... and store $ra while yer at it
+		sw   	$s0, 4($sp)						# Store those $s registers
+		sw   	$s1, 8($sp)
+		sw   	$s2, 12($sp)
+		sw   	$s3, 16($sp)
 
 		#####  Let's Recurse!  #####
-		sw   $s0, 4($sp)						# Store those $s registers
-		sw   $s1, 8($sp)
-		sw   $s2, 12($sp)
-		sw   $s3, 16($sp)
-		move $s0, $a0							# Place our function params in the $s registers
-		move $s1, $a1
-		move $s2, $a2
-		move $s3, $a3
+		move 	$s0, $a0						# Place our function params in the $s registers
+		move 	$s1, $a1
+		move 	$s2, $a2
+		move 	$s3, $a3
 
-		sub  $a0, $a0, 1						# $a0 = row - 1
-		jal  flood_fill							# flood_fill(row - 1, col, marker, canvas);
+		sub  	$a0, $a0, 1						# $a0 = row - 1
+		jal  	flood_fill						# flood_fill(row - 1, col, marker, canvas);
 
-		move $a0, $s0							# Restore the params from $s registers
-		move $a1, $s1
-		move $a2, $s2
-		move $a3, $s3
+		move 	$a0, $s0						# Restore the params from $s registers
+		move 	$a1, $s1
+		move 	$a2, $s2
+		move 	$a3, $s3
 
-		add  $a1, $a1, 1						# $a1 = col + 1
-		jal  flood_fill							# flood_fill(row, col + 1, marker, canvas);
+		add  	$a1, $a1, 1						# $a1 = col + 1
+		jal  	flood_fill						# flood_fill(row, col + 1, marker, canvas);
 
-		move $a0, $s0							# Restore the params from $s registers
-		move $a1, $s1
-		move $a2, $s2
-		move $a3, $s3
+		move 	$a0, $s0						# Restore the params from $s registers
+		move 	$a1, $s1
+		move 	$a2, $s2
+		move 	$a3, $s3
 
-		add  $a0, $a0, 1						# $a0 = row + 1
-		jal  flood_fill							# flood_fill(row + 1, col, marker, canvas);
+		add  	$a0, $a0, 1						# $a0 = row + 1
+		jal  	flood_fill						# flood_fill(row + 1, col, marker, canvas);
 
-		move $a0, $s0							# Restore the params from $s registers
-		move $a1, $s1
-		move $a2, $s2
-		move $a3, $s3
+		move 	$a0, $s0						# Restore the params from $s registers
+		move 	$a1, $s1
+		move 	$a2, $s2
+		move 	$a3, $s3
 
-		sub  $a1, $a1, 1						# $a1 = col - 1
-		jal  flood_fill							# flood_fill(row, col - 1, marker, canvas);
+		sub  	$a1, $a1, 1						# $a1 = col - 1
+		jal  	flood_fill						# flood_fill(row, col - 1, marker, canvas);
 
+		lw   	$ra, 0($sp)						# Restore $ra
 		lw   	$s0, 4($sp)						# Restore those $s registers
 		lw   	$s1, 8($sp)
 		lw   	$s2, 12($sp)
 		lw   	$s3, 16($sp)
-
-		lw   	$ra, 0($sp)						# Restore $ra
 		add  	$sp, $sp, 20					# Tear down the stack!
 	ff_end:
         # Pray for me
@@ -914,6 +930,9 @@ interrupt_dispatch:                      				# interrupt dispatch center
 		and         $a0, $k0, BOT_FREEZE_INT_MASK	    # is there a freeze interrupt?
         bne         $a0, $zero, frozen_int 		       	# if $a0 != $zero then frozen_int
 
+		and         $a0, $k0, REQUEST_PUZZLE_INT_MASK	# is the puzzle ready?
+        bne         $a0, $zero, puzzle_ready_int 		# if $a0 != $zero then puzzle_ready_int
+
         and         $a0, $k0, BONK_INT_MASK
         bne         $a0, $zero, bonk_interrupt          # if $a0 != $zero then bonk_interrupt
 
@@ -938,8 +957,6 @@ enter_int:
 		sb 			$a1, station_up						# set station_up to true
         j           interrupt_dispatch           		# jump to interrupt_dispatch
 
-# <<<<<<< HEAD
-
 chase_station:
 		li	    	$a1, 1
 		sb	    	$a1, station_up						# Set station_up to true
@@ -953,6 +970,10 @@ frozen_int:
 		li 			$a1, 1
 		sb 			$a1, isFrozen								# Set isFrozen to true
 		j 			interrupt_dispatch					# jump to interrupt_dispatch
+
+puzzle_ready_int:
+		sw 			$a1, REQUEST_PUZZLE_ACK
+		li 			$a1, 
 
 bonk_interrupt:
     sw          $a1, BONK_ACK               		# acknowledge interrupt
