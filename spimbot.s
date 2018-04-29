@@ -1021,16 +1021,18 @@ frozen_int:
 		la 			$a1, puzzle_data
 		sw 			$a1, BOT_FREEZE_ACK					# Ack it, yo
 		li 			$a1, 1
-		sb 			$a1, isFrozen								# Set isFrozen to true
+		sb 			$a1, isFrozen						# Set isFrozen to true
 		j 			interrupt_dispatch					# jump to interrupt_dispatch
 
 puzzle_ready_int:
 		sw 			$a1, REQUEST_PUZZLE_ACK
-		li 			$a1, 
+		li 			$a1, 1
+		sb 			$a1, puzzleReady
+		j 			interrupt_dispatch
 
 bonk_interrupt:
-    sw          $a1, BONK_ACK               		# acknowledge interrupt
-    j           interrupt_dispatch              	# see if other interrupts are waiting
+    sw          $a1, BONK_ACK               			# acknowledge interrupt
+    j           interrupt_dispatch              		# see if other interrupts are waiting
 
 
 non_intrpt:												# was some non-interrupt
