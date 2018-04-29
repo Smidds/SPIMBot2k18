@@ -57,7 +57,7 @@ BOT_FREEZE_ACK              = 0xffff00e4
 ## Global Constants
 LOW_ALT_WARN				= 50
 SAFE_ALT					= 90
-LOW_ENERGY_WARN				= 200
+LOW_ENERGY_WARN				= 600
 WAIT_STATION_X		        = 100
 WAIT_STATION_Y				= 100
 
@@ -99,16 +99,26 @@ main:
 		lb 		$s1, 0($s1)
 		not 	$s1, $s1 							# $s1 = !have_dropped_off <-- will be true if we haven't dropped off yet
 		and 	$s0, $s0, $s1 						# If station_up AND we haven't dropped off yet, we should take care of that
-	 	bne 	$s0, 1, else2						# Check if station is up
+	 	bne 	$s0, 1, else4						# Check if station is up
 
-  		jal 	chase_station_extract
+		add		$s4, $s4, 1
 
+  	jal 	chase_station_extract
+		li    $s0, 1
+		lb    $s0, have_dropped_off
 	 	j		else_begin
+
+		add		$s5, $s5, 1	
+
+	 	j		  else_done
 
 	else2:
 		la 		$s0, station_down
 		lb 		$s0, 0($s0)
 		bne 	$s0, 1, else3						# Check if station is down
+
+		lb		$0, station_down		#
+
 
 		##############################
 		##  Do whatever we do here   #
@@ -128,7 +138,13 @@ main:
 	else4:
 		li 		$s0, LOW_ENERGY_WARN
 		lw 		$s1, GET_ENERGY
-		blt 	$s0, $s1, else5						# Check if our energy is too low and abort
+
+		add   $s6, $s6, 1
+		blt 	$s0, $s1, else_done						# Check if our energy is too low and abort
+		li		$a0, 0
+
+		jal   solvePuzzle
+		add   $s7, $s7, 1
 
 		##############################
 		##  Handle low energy here   #
@@ -150,15 +166,15 @@ main:
 		move    $s2, $v0            				# $a0 = $v
 		lw      $s0, GET_CARGO       				# $s0 = cargo_amount
 		add     $s0, $s0, $v1        				# $s0 = cargo_amount + best_points
-		li      $s1, 126             				# $s1 = 126
+		li      $s1, 200             				# $s1 = 126
 		bge     $s0, $s1, enable_int_station 		# if $s0 >= $s1 then enable_int
 		li      $s0, 0               				# $s0 = 0
 		mtc0    $s0, $12             				# disable to global interrupt signal
 		move    $a0, $s2             				# $a0 = $s0
 		jal     chase                  				# chase
-    	sw      $s0, COLLECT_ASTEROID
+    sw      $s0, COLLECT_ASTEROID
 
-    	j       end                    				# jump to end
+    j       end                    				# jump to end
 
 	enable_int_station:
 		li      $s0, STATION_EXIT_INT_MASK        	# $s0 = STATION_EXIT_INT_MASK
@@ -189,7 +205,8 @@ chase:
 		li        $t3, 1                        # $t3 = ANGLE_CONTROL = 1
 		sw        $t3, ANGLE_CONTROL            # set ANGLE_CONTROL
 
-		j         c_getToX                      # jump to getToX
+		#j         c_getToX                      # jump to getToX
+		jr				$ra
 
 	c_right:
 		li        $t3, 0                        # $t3 = 0
@@ -197,7 +214,9 @@ chase:
 		li        $t3, 1                        # $t3 = 1
 		sw        $t3, ANGLE_CONTROL            # set ANGLE_CONTROL
 
-		j         c_getToX                      # jump to getToX
+		#j         c_getToX                      # jump to getToX
+		jr				$ra					# jump to ra
+
 
 	c_getToY:
 		lw        $t1, BOT_Y                    # get the BOT_Y
@@ -210,7 +229,8 @@ chase:
 		li        $t3, 1                        # $t3 = 1
 		sw        $t3, ANGLE_CONTROL            # set ANGLE_CONTROL
 
-		j         c_getToX                      # jump to getToY
+		#j         c_getToX                      # jump to getToY
+		jr				$ra					# jump to $ra
 
 	c_down:
 		li        $t3, 90                       # $t3 = 90
@@ -218,7 +238,8 @@ chase:
 		li        $t3, 1                        # $t3 = 1
 		sw        $t3, ANGLE_CONTROL            # set ANGLE_CONTROL
 
-		j         c_getToX                      # jump to getToY
+		#j         c_getToX                      # jump to getToY
+		jr				$ra					# jump to $ra
 
 	c_adjust_x:
 		lw        $t1, BOT_X                    # get the BOT_X
@@ -231,7 +252,8 @@ chase:
 		li        $t3, 1                        # $t3 = ANGLE_CONTROL = 1
 		sw        $t3, ANGLE_CONTROL            # set ANGLE_CONTROL
 
-		j         c_adjust_x                    # jump to adjust_x
+		#j         c_adjust_x                    # jump to adjust_x
+		jr				$ra					# jump to $ra
 
 	c_adjust_x_right:
 		li        $t3, 0                        # $t3 = 0
@@ -239,7 +261,8 @@ chase:
 		li        $t3, 1                        # $t3 = 1
 		sw        $t3, ANGLE_CONTROL            # set ANGLE_CONTROL
 
-		j         c_adjust_x                    # jump to adjust_x
+		#j         c_adjust_x                    # jump to adjust_x
+		jr				$ra					# jump to 		$ra
 
 	c_end:
 		jr        $ra                          	# return
@@ -330,7 +353,7 @@ after_if:
 
 FN_end:
     move      $v0, $t3							# $v0 = $t3
-    
+
     jr        $ra 								# return
 
 
@@ -837,7 +860,7 @@ enter_int:
 chase_station:
 		li	    	$a1, 1
 		sb	    	$a1, station_up						# Set station_up to true
-		li	    	$a1, 0								
+		li	    	$a1, 0
 		sb	    	$a1, station_down					# set station_down to false
   		j           interrupt_dispatch            		# jump to interrupt_dispatch
 
@@ -845,12 +868,12 @@ frozen_int:
 		la 			$a1, puzzle_data
 		sw 			$a1, BOT_FREEZE_ACK					# Ack it, yo
 		li 			$a1, 1
-		sb 			$a1, isFrozen						# Set isFrozen to true
+		sb 			$a1, isFrozen								# Set isFrozen to true
 		j 			interrupt_dispatch					# jump to interrupt_dispatch
 
 bonk_interrupt:
-        sw          $a1, BONK_ACK               		# acknowledge interrupt
-        j           interrupt_dispatch              	# see if other interrupts are waiting
+    sw          $a1, BONK_ACK               		# acknowledge interrupt
+    j           interrupt_dispatch              	# see if other interrupts are waiting
 
 
 non_intrpt:												# was some non-interrupt
