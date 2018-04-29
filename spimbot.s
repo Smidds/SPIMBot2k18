@@ -124,7 +124,7 @@ main:
 		li      $a0, 0xfa0000
 		lw 			$s1, BOT_Y									# (250, y)
 		or			$a0, $a0, $s1
-		jal			move_bot				# jump to move_bot and save position to $ra
+		jal			standby				# jump to move_bot and save position to $ra
 
 		jal 	solvePuzzle
 		sb			$0, fuel_requested
@@ -186,7 +186,8 @@ main:
 		lb 		$s0, 0($s0)
 		bne 	$s0, 1, else3						# Check if station is down
 
-		jal		standby				# jump to standby and save position to $ra
+		li		$a0, 0xfa0032						# $a0 = 0xfa00
+		jal		standby					# jump to standby and save position to $ra
 
 
 		##############################
@@ -905,10 +906,12 @@ chase_station_extract:
 		jr 	  	$ra
 
 standby:
+		# Modified so that it takes $a0
         li        	$t0, 10               				# $t0 = 10
         sw        	$t0, VELOCITY         				#
 
-        li          $t0, 0xfa0032           			# (150, 50)
+        # li          $t0, 0xfa0032           			# (150, 50)
+		move 		$t0, $a0							# $t0 = $a0
         srl         $t1, $t0, 16            			# $t1 = STATION_LOC.x
         and         $t2, $t0, 0x0000ffff    			# $t2 = STATION_LOC.y
         lw          $t3, BOT_X              			# $t3 = BOT_X
