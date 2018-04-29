@@ -515,8 +515,8 @@ solvePuzzle:
 
 		la 		$t0, puzzle_data
 
-		lw      $a0, 0($t0)             		# s0 = canvas
-        lw      $a1, 16($t0)            		# s1 = lines
+		move 	$a1, $t0
+        add 	$a0, $t0, 16
         la      $a2, puzzle_solution           	# s2 = solution
 
         jal     count_disjoint_regions
@@ -605,7 +605,7 @@ count_disjoint_regions:
 		lw   $t1, 4($a2)						# $t1 = &solution->counts
 		mul  $t4, $t0, 4						# $t4 = actual "i" index
 		add  $t1, $t1, $t4						# $t1 = &solution->counts[i]
-		sw   $v0, 0($t1)						# solution->counts[i] = count;
+		sw   $v0, 0($t1)						# solution->counts[i] = count; <<<<<<<<
 
 		add $t0, $t0, 1							# $t0 = i++
 		j   cdr_for_loop
