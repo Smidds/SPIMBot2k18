@@ -75,7 +75,7 @@ counts:         .space  8
 	station_down: 				.space 	1
 	isFrozen:					.space 	1
 	puzzleReady:				.space 	1
-	fuel_requested:			.space  1
+	fuel_requested:				.space  1
 
 .text
 main:
@@ -85,6 +85,9 @@ main:
 	sw      $s1, 4($sp)         				#
 	sw      $s2, 8($sp)         				#
 	sw      $s3, 12($sp)        				#
+
+	sb 		$0, fuel_requested
+
 
 	li      $s0, STATION_EXIT_INT_MASK        		# $s0 = STATION_EXIT_INT_MASK
 	or      $s0, $s0, STATION_ENTER_INT_MASK  		# $s0 += STATION_ENTER_INT_MASK
@@ -113,13 +116,10 @@ main:
 
 		bne		$s0, 1, else_request_fuel_hold
 
-		add   $s6, $s6, 1
-
 		li 		$s0, LOW_ENERGY_WARN
 		lw 		$s1, GET_ENERGY
 
 		blt 	$s0, $s1, else_request_fuel_hold						# Check if our energy is too low
-
 
 		li      $a0, 0xfa0000
 		lw 			$s1, BOT_Y									# (250, y)
@@ -129,7 +129,7 @@ main:
 		jal 	solvePuzzle
 		sb			$0, fuel_requested
 
-
+		j 		else1
 	else_request_fuel_hold:
 		la		$s0, fuel_requested
 		lb		$s0, 0($s0)
@@ -137,6 +137,7 @@ main:
 		beq		$s0, 1, else1
 		la 		$s0, puzzle_data
 		sw		$s0, REQUEST_PUZZLE
+		li 		$s0, 1
 		sb		$s0, fuel_requested		#
 
 		add   $s7, $s7, 1
@@ -675,8 +676,8 @@ count_disjoint_regions_step:
 		mul  $t3, $t0, 4						# Get the true "row" index
 		add  $t2, $t2, $t3						# $t2 = &canvas->canvas[row]
 		lw   $t2, 0($t2)						# $t2 = canvas->canvas[row]
+		mul	 $t1, $t1, 4
 		add  $t2, $t2, $t1						# $t2 = &canvas->canvas[row][col]
-
 		lb   $t3, 0($t2)						# $t3 = canvas->canvas[row][col] // $t3 = curr_char
 
 		## If statement ##
@@ -748,6 +749,7 @@ flood_fill:
 		mul  	$t1, $a0, 4						# Get the true "row" index
 		add  	$t0, $t0, $t1					# $t0 = &canvas->canvas[row]
 		lw   	$t0, 0($t0)						# $t0 = canvas->canvas[row]
+		mul		$a1, $a1, 4
 		add  	$t0, $t0, $a1					# $t0 = &canvas->canvas[row][col]
 
 		lb   	$t1, 0($t0)						# $t1 = canvas->canvas[row][col] // $t1 = curr
@@ -840,6 +842,7 @@ draw_line:
         add    	$t4, $t4, $t5     				# $t4 = &(canvas[pos / width])
         lw     	$t4, 0($t4)       				# $t4 = (canvas[pos / width])
         rem    	$t5, $t2, $t0     				# pos % width
+		mul		$t5, $t5, 4
         add    	$t4, $t4, $t5     				# $t4 = &(canvas[pos / width][pos % width])
         sb     	$t3, 0($t4)       				# store into $t4 canvas-pattern
         add    	$t2, $t2, $t1     				# pos += step_size
