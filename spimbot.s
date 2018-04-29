@@ -101,7 +101,27 @@ main:
 		and 	$s0, $s0, $s1 						# If station_up AND we haven't dropped off yet, we should take care of that
 	 	bne 	$s0, 1, else2						# Check if station is up
 
-  		jal 	chase_station_extract
+		lw      $t0, STATION_LOC        			#
+        srl     $t1, $t0, 16            			# $t1 = STATION_LOC.x
+        and     $t2, $t0, 0x0000ffff    			# $t2 = STATION_LOC.y
+        lw      $t3, BOT_X              			# $t3 = BOT_X
+        lw      $t4, BOT_Y              			# $t4 = BOT_Y
+
+        bne     $t1, $t3, else1_cont          		# if station.x != bot.x then goEW
+        bne     $t2, $t4, else1_cont          		# if station.y != bot.y then goSN
+        sw      $t0, DROPOFF_ASTEROID   			# now the bot should overlap the station
+
+		li 		$s1, 1
+		la		$s0, have_dropped_off				# we are going to drop off asteroid
+		sb		$s1, 0($s0)							# raise the flag
+
+		j		else1_end				# jump to else1_end
+
+	else1_cont:
+		move 	$a0, $t0				# $a0 = $t0
+		jal		move_bot				# jump to move and save position to $ra
+
+    else1_end:
 
 	 	j		end
 
@@ -109,6 +129,9 @@ main:
 		la 		$s0, station_down
 		lb 		$s0, 0($s0)
 		bne 	$s0, 1, else3						# Check if station is down
+
+		jal		standby				# jump to standby and save position to $ra
+
 
 		##############################
 		##  Do whatever we do here   #
@@ -144,23 +167,28 @@ main:
 		##  Evil puzzle stuff here   #
 		##############################
 
-		j 		end
+		# j 		end
 	else_done:
 		jal     findNearest         				# findNearest
 		move    $s2, $v0            				# $a0 = $v
 		lw      $s0, GET_CARGO       				# $s0 = cargo_amount
 		add     $s0, $s0, $v1        				# $s0 = cargo_amount + best_points
-		li      $s1, 126             				# $s1 = 126
-		bge     $s0, $s1, enable_int_station 		# if $s0 >= $s1 then enable_int
+		li      $s1, 128             				# $s1 = 128
+		bge     $s0, $s1, enable_int_station 		# if $s0 >= 128 then enable_int
 		li      $s0, 0               				# $s0 = 0
 		mtc0    $s0, $12             				# disable to global interrupt signal
 		move    $a0, $s2             				# $a0 = $s0
-		jal     chase                  				# chase
+		jal     move_bot                  			# chase
+		
     	sw      $s0, COLLECT_ASTEROID
 
     	j       end                    				# jump to end
 
 	enable_int_station:
+		li		$s0, 0								# station is gone,
+		la		$s1, have_dropped_off				# lower the flag
+		sb		$s0, 0($s1)							#
+		# jal 	standby
 		li      $s0, STATION_EXIT_INT_MASK        	# $s0 = STATION_EXIT_INT_MASK
 		or      $s0, $s0, STATION_ENTER_INT_MASK  	# $s0 += STATION_ENTER_INT_MASK
 		or      $s0, $s0, BONK_INT_MASK
@@ -179,10 +207,61 @@ main:
 
 #--------------------------- END OF MAIN FUNCTION ----------------------------#
 
+move_bot:
+		li        $t0, 10        					# $t0 = 10
+	    sw        $t0, VELOCITY  					# $a0 should be the address to chase
+	    move      $t0, $a0        					# $t0 = $a0
+
+move_X:
+		lw        $t1, BOT_X                    # get the BOT_X
+		srl       $t2, $t0, 16                  # $t2 = asteroid.x
+		beq       $t1, $t2, move_Y            	# if BOT_X == asteroid.x then getToY
+		blt       $t1, $t2, move_R             	# if BOT_X < asteroid.x then right
+
+		li        $t3, 180                      # $t3 = degrees = 180
+		sw        $t3, ANGLE                    # set ANGLE
+		li        $t3, 1                        # $t3 = ANGLE_CONTROL = 1
+		sw 		  $t3, ANGLE_CONTROL            # set ANGLE_CONTROL
+
+		j		  move_end						# jump to move_end
+
+move_R:
+		li        $t3, 0                        # $t3 = 0
+		sw        $t3, ANGLE                    # set ANGLE
+		li        $t3, 1                        # $t3 = 1
+		sw        $t3, ANGLE_CONTROL            # set ANGLE_CONTROL
+
+		j		  move_end						# jump to move_end
+
+move_Y:
+		lw        $t1, BOT_Y                    # get the BOT_Y
+		and       $t2, $t0, 0x0000ffff          # $t2 = asteroid.y
+		beq       $t1, $t2, move_X          	# if BOT_Y == asteroid.y then adjust_x
+		blt       $t1, $t2, move_D              # if BOT_Y < asteroid.y then down
+
+		li        $t3, 270                      # $t3 = 270
+		sw        $t3, ANGLE                    # set ANGLE
+		li        $t3, 1                        # $t3 = 1
+		sw        $t3, ANGLE_CONTROL            # set ANGLE_CONTROL
+
+		j		  move_end						# jump to move_end
+
+move_D:
+		li        $t3, 90                       # $t3 = 90
+		sw        $t3, ANGLE                    # set ANGLE
+		li        $t3, 1                        # $t3 = 1
+		sw        $t3, ANGLE_CONTROL            # set ANGLE_CONTROL
+
+		j		  move_end						# jump to move_end
+
+move_end:
+		jr			$ra							# return
+
+
 chase:
-    li        $t0, 10        					# $t0 = 10
-    sw        $t0, VELOCITY  					# $a0 should be the address to chase
-    move      $t0, $a0        					# $t0 = $a0
+    	li        $t0, 10        					# $t0 = 10
+    	sw        $t0, VELOCITY  					# $a0 should be the address to chase
+    	move      $t0, $a0        					# $t0 = $a0
 
 	c_getToX:
 		lw        $t1, BOT_X                    # get the BOT_X
@@ -293,8 +372,8 @@ end_findFav:
 
 ## we're finding nearest
 findNearest:
-    li        $t0, 0        					# $t0 = 0
-    mtc0      $t0, $12        					# disable interrupt for now
+    # li        $t0, 0        					# $t0 = 0
+    # mtc0      $t0, $12        					# disable interrupt for now
 
     la        $t0, asteroid_map_address       	# $t0 contains the asteroidMap
     sw        $t0, ASTEROID_MAP               	#
@@ -336,7 +415,7 @@ after_if:
 
 FN_end:
     move      $v0, $t3							# $v0 = $t3
-    
+
     jr        $ra 								# return
 
 
@@ -686,6 +765,7 @@ chase_station_extract:
         bne         $t1, $t3, goEW          			# if station.x != bot.x then goEW
         bne         $t2, $t4, goSN          			# if station.y != bot.y then goSN
         sw          $t0, DROPOFF_ASTEROID   			# now the bot should overlap the station
+
         j           cs_end                  			# jump to cs_end
 
 	goEW:
@@ -723,7 +803,8 @@ chase_station_extract:
 	cs_loop:
         j         chase_station_extract             			# jump to chase_station
 	cs_end:
-		jr 	  $ra
+
+		jr 	  	$ra
 
 standby:
         li        	$t0, 10               				# $t0 = 10
@@ -839,12 +920,18 @@ exit_int:
 
 enter_int:
         sw          $a1, STATION_ENTER_ACK        		# Ack it
-<<<<<<< HEAD
+		li 			$a1, 0
+		sb 			$a1, station_down					# set station_down to false
+		li 			$a1, 1
+		sb 			$a1, station_up						# set station_up to true
+        j           interrupt_dispatch           		# jump to interrupt_dispatch
+
+# <<<<<<< HEAD
 
 chase_station:
 		li	    	$a1, 1
 		sb	    	$a1, station_up						# Set station_up to true
-		li	    	$a1, 0								
+		li	    	$a1, 0
 		sb	    	$a1, station_down					# set station_down to false
   		j           interrupt_dispatch            		# jump to interrupt_dispatch
 
