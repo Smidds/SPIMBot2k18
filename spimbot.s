@@ -63,11 +63,13 @@ WAIT_STATION_Y				= 100
 
 # put your data things here
 .data
+puzzle_solution:       .word   2       counts
+counts:         .space  8
+
 .align 2
 	asteroid_map_address: 		.space 	1024
 	puzzle_data:				.space 	1024		## Looks like Puzzle is this big
 	thrown_puzzle_data:			.space 	1024		## Looks like Puzzle is this big
-	puzzle_solution:			.space	8
 	station_up:   				.space 	1
 	have_dropped_off:   		.space 	1
 	station_down: 				.space 	1
