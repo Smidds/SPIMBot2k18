@@ -60,6 +60,8 @@ SAFE_ALT					= 90
 LOW_ENERGY_WARN				= 300
 WAIT_STATION_X		        = 100
 WAIT_STATION_Y				= 100
+CARRYING_CAPACITY     = 200
+ACCEPTABLE_STATION_X  = 100
 
 # put your data things here
 .data
@@ -131,8 +133,6 @@ main:
 		li 		$s0, LOW_ENERGY_WARN
 		lw 		$s1, GET_ENERGY
 
-		add		$s5, $s5, 1
-
 
 		blt 	$s0, $s1, else1						# Branch if energy is at a fine level
 																		# continue if energy is low
@@ -140,13 +140,12 @@ main:
 		#li      $a0, 0xfa0000
 		#lw 			$s1, BOT_Y									# (250, y)
 		#or			$a0, $a0, $s1
-		#jal			standby				# jump to move_bot and save position to $ra
+		jal			standby				# jump to move_bot and save position to $ra
 
 		move 	$a0, $0
-		jal 	solvePuzzle
+		jal 	solvePuzzle				# solve the puzzle to fuel up
 		sb			$0, fuel_requested
 
-		add   $s6, $s6, 1
 
 		j 		else1
 
@@ -245,7 +244,7 @@ main:
 		move    $s2, $v0            				# $a0 = $v
 		lw      $s0, GET_CARGO       				# $s0 = cargo_amount
 		add     $s0, $s0, $v1        				# $s0 = cargo_amount + best_points
-		li      $s1, 128             				# $s1 = 128
+		li      $s1, CARRYING_CAPACITY             				# $s1 = 128
 		bge     $s0, $s1, enable_int_station 		# if $s0 >= 128 then enable_int
 		# li      $s0, 0               				# $s0 = 0
 		# mtc0    $s0, $12             				# disable to global interrupt signal
@@ -257,6 +256,8 @@ main:
     j       end                    				# jump to end
 
 	enable_int_station:
+
+
 		li		$s0, 0								# station is gone,
 		la		$s1, have_dropped_off				# lower the flag
 		sb		$s0, 0($s1)							#
@@ -1239,7 +1240,6 @@ puzzle_ready_int:
 		sw 			$a1, REQUEST_PUZZLE_ACK
 		li 			$a1, 1
 		sb 			$a1, puzzleReady
-		add			$s4, $s4, 1		#  =  +
 
 		j 			interrupt_dispatch
 
