@@ -63,6 +63,7 @@ WAIT_STATION_Y				= 100
 CARRYING_CAPACITY     		= 256
 ACCEPTABLE_STATION_DIFF  	= 100
 ACCEPTABLE_STATION_X		 = 60
+MEGA_REFUEL_NUM_TIMES			= 3
 
 # put your data things here
 .data
@@ -79,6 +80,7 @@ counts:         .space  8
 	isFrozen:					.space 	1
 	puzzleReady:				.space 	1
 	fuel_requested:				.space  1
+	mega_refuel:				.space 4
 
 .text
 main:
@@ -104,12 +106,66 @@ main:
 	else_begin:
 		la 		$s0, isFrozen
 		lb 		$s0, 0($s0)
-		bne 	$s0, 1, else_request_fuel_hold					# Check if we're frozen
+		bne 	$s0, 1, else_mega_refuel_start				# Check if we're frozen
 
 		jal 	solvePuzzle
 		sb 		$0, isFrozen						# State that we're not frozen anymore
 
 		j 		else_begin
+
+	else_mega_refuel_start:
+
+			# if mega_refuel == 0 then skip mega refueling and go to regular
+			la 		$s0, mega_refuel
+			lb 		$s0, 0($s0)
+			beq		$s0, $0, else_request_fuel_hold
+
+			add $s7, $s7, 1
+
+			jal   standby			# stay in standby if it is time to mega refuel
+
+			# if puzzle is ready (and mega_refuel != 0) then go to else_mega_refuel_end
+			la		$s0, puzzleReady
+			lb		$s0, 0($s0)
+			beq		$s0, 1, else_mega_refuel_end
+
+			# if puzzle is not ready and mega_refuel is not zero, just keep looping until puzzle is ready
+			la		$s0, fuel_requested
+			lb		$s0, 0($s0)
+			beq		$s0, 1, else_begin
+
+			# if(mega_refuel != 0 && !puzzleReady && !fuel_requested)
+			# then request puzzle
+			la 		$s0, puzzle_data
+			sw		$s0, REQUEST_PUZZLE
+
+			li 		$s0, 1
+			sb		$s0, fuel_requested
+
+			j			else_begin
+
+
+	else_mega_refuel_end:
+
+		# FIX THIS it only does it once 
+		# solve puzzle
+		move 	$a0, $0
+		jal 	solvePuzzle				# solve the puzzle to fuel up
+		sb		$0, fuel_requested
+		sb		$0, mega_refuel		#
+
+		# la 		$s0, mega_refuel
+		# lw 		$s0, 0($s0)
+		# add		$s0, $s0, 1
+		# sb		$s0, mega_refuel
+		#
+		# # if (mega_refuel > MEGA_REFUEL_NUM_TIMES) { mega_refuel = 0}
+		# # else go back to the top
+		# li		$s1, MEGA_REFUEL_NUM_TIMES
+		# ble		$s0, $s1, else_begin
+		# sw		$0, mega_refuel		#
+
+		j			else_begin
 
 	else_request_fuel_hold:
 		la		$s0, fuel_requested
@@ -174,18 +230,20 @@ main:
 		li		$t6, ACCEPTABLE_STATION_DIFF
 
 		bgt		$t5, $t6, else2							# if botx - stationx > ACCEPTABLE_STATION_DIFF
-		move    $v0, $s2
-		lw      $ra, 0($sp)
-		lw      $s0, 4($sp)
-		lw      $s1, 8($sp)
-		lw      $s2, 12($sp)
-		lw      $s3, 16($sp)
-		lw      $s4, 20($sp)
-		lw      $s5, 24($sp)
-		lw      $s6, 28($sp)
-		lw      $s7, 32($sp)
-		add     $sp, $sp, 36
-		jr      $ra					# then skip chasing
+
+		## WHAT IS THIS ???? WHERE DID THIS COME FROM
+		# move    $v0, $s2
+		# lw      $ra, 0($sp)
+		# lw      $s0, 4($sp)
+		# lw      $s1, 8($sp)
+		# lw      $s2, 12($sp)
+		# lw      $s3, 16($sp)
+		# lw      $s4, 20($sp)
+		# lw      $s5, 24($sp)
+		# lw      $s6, 28($sp)
+		# lw      $s7, 32($sp)
+		# add     $sp, $sp, 36
+		# jr      $ra					# then skip chasing
 
 		li		$s0, ACCEPTABLE_STATION_X		# if stationx < ACCEPTABLE_STATION_X
 		blt     $t1, $s0, else2							# then skip chasing
@@ -193,6 +251,11 @@ main:
 		bne     $t1, $t3, else1_cont          		# if station.x != bot.x then goEW
 		bne     $t2, $t4, else1_cont          		# if station.y != bot.y then goSN
 		sw      $t0, DROPOFF_ASTEROID   			# now the bot should overlap the station
+
+		li		$s1, 1
+		sb		$s1, mega_refuel
+
+
 
 		li 		$s1, 1
 		la		$s0, have_dropped_off				# we are going to drop off asteroid
@@ -236,7 +299,7 @@ main:
 		slt 	$s0, 70
 		bne 	$s0, 1, else_done					# Check if the other bot is low enough to screw with them.
 
-		
+
 		jal 	solvePuzzle
 
 		j 		else_begin
