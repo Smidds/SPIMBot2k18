@@ -61,7 +61,8 @@ LOW_ENERGY_WARN				= 300
 WAIT_STATION_X		        = 100
 WAIT_STATION_Y				= 100
 CARRYING_CAPACITY     = 200
-ACCEPTABLE_STATION_X  = 100
+ACCEPTABLE_STATION_DIFF  = 100
+ACCEPTABLE_STATION_X		 = 60
 
 # put your data things here
 .data
@@ -158,7 +159,8 @@ main:
 		lb 		$s1, 0($s1)
 		not 	$s1, $s1 							# $s1 = !have_dropped_off <-- will be true if we haven't dropped off yet
 		and 	$s0, $s0, $s1 						# If station_up AND we haven't dropped off yet, we should take care of that
-	 	bne 	$s0, 1, else_done						# Check if station is up
+	 	bne 	$s0, 1, else2						# Check if station is up
+
 
 		# CHANGE else5 to else2 once we have else2 finished !!!!!!
 
@@ -167,6 +169,15 @@ main:
     and     $t2, $t0, 0x0000ffff    			# $t2 = STATION_LOC.y
     lw      $t3, BOT_X              			# $t3 = BOT_X
     lw      $t4, BOT_Y              			# $t4 = BOT_Y
+
+		sub			$t5, $t3, $t1
+		li			$t6, ACCEPTABLE_STATION_DIFF
+
+		bgt			$t5, $t6, else2							# if botx - stationx > ACCEPTABLE_STATION_DIFF
+																				# then skip chasing
+
+		li			$s0, ACCEPTABLE_STATION_X		# if stationx < ACCEPTABLE_STATION_X
+		blt     $t1, $s0, else2							# then skip chasing
 
     bne     $t1, $t3, else1_cont          		# if station.x != bot.x then goEW
     bne     $t2, $t4, else1_cont          		# if station.y != bot.y then goSN
@@ -193,7 +204,7 @@ main:
 	else2:
 		la 		$s0, station_down
 		lb 		$s0, 0($s0)
-		bne 	$s0, 1, else3						# Check if station is down
+		bne 	$s0, 1, else_done						# Check if station is down
 
 		li		$a0, 0xfa0032						# $a0 = 0xfa00
 		jal		standby					# jump to standby and save position to $ra
@@ -203,7 +214,8 @@ main:
 		##  Do whatever we do here   #
 		##############################
 
-		# j		else_begin
+		j		else_begin
+
 	else3:
 	# If bot x is below altitude go to the right
 	# FIX THIS ITS BROKE
@@ -233,6 +245,7 @@ main:
 		slt 	$s0, 70
 		bne 	$s0, 1, else_done					# Check if the other bot is low enough to screw with them.
 
+
 		##############################
 		##  Evil puzzle stuff here  		 #
 		##############################
@@ -244,7 +257,7 @@ main:
 		move    $s2, $v0            				# $a0 = $v
 		lw      $s0, GET_CARGO       				# $s0 = cargo_amount
 		add     $s0, $s0, $v1        				# $s0 = cargo_amount + best_points
-		li      $s1, CARRYING_CAPACITY             				# $s1 = 128
+		li      $s1, CARRYING_CAPACITY             				# $s1 = carrying capacity
 		bge     $s0, $s1, enable_int_station 		# if $s0 >= 128 then enable_int
 		# li      $s0, 0               				# $s0 = 0
 		# mtc0    $s0, $12             				# disable to global interrupt signal
