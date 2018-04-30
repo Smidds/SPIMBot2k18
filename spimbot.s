@@ -317,7 +317,7 @@ move_R:
 move_Y:
 		lw        $t1, BOT_Y                    # get the BOT_Y
 		and       $t2, $t0, 0x0000ffff          # $t2 = asteroid.y
-		beq       $t1, $t2, move_X          	# if BOT_Y == asteroid.y then adjust_x
+		beq       $t1, $t2, move_end          	# if BOT_Y == asteroid.y then adjust_x
 		blt       $t1, $t2, move_D              # if BOT_Y < asteroid.y then down
 
 		li        $t3, 270                      # $t3 = 270
