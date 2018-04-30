@@ -64,7 +64,7 @@ WAIT_STATION_Y				= 100
 CARRYING_CAPACITY     		= 256
 ACCEPTABLE_STATION_DIFF  	= 175
 ACCEPTABLE_STATION_X		 = 75
-MEGA_REFUEL_NUM_TIMES			= 2
+MEGA_REFUEL_NUM_TIMES			= 1
 
 # put your data things here
 .data
@@ -111,7 +111,7 @@ main:
 	else_begin:
 		la 		$s0, isFrozen
 		lb 		$s0, 0($s0)
-		bne 	$s0, 1, else_mega_refuel_start		# Check if we're frozen
+		bne 	$s0, 1, else_request_fuel_hold	# Check if we're frozen
 
 		jal 	solvePuzzle
 		sb 		$0, isFrozen						# State that we're not frozen anymore
