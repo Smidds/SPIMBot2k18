@@ -179,6 +179,11 @@ main:
 		j		else1_end				# jump to else1_end
 
 	else1_cont:
+		# srl     $t1, $t0, 16            			# $t1 = STATION_LOC.x
+		# lw      $t3, BOT_X              			# $t3 = BOT_X
+		# li		$t2, 0x								# $t2 = 0x
+
+		# slt		$t1,
 		move 	$a0, $t0				# $a0 = $t0
 		jal		move_bot				# jump to move and save position to $ra
 
@@ -286,7 +291,7 @@ move_X:
 		li        $t3, 1                        # $t3 = ANGLE_CONTROL = 1
 		sw 		  $t3, ANGLE_CONTROL            # set ANGLE_CONTROL
 
-		j		  move_end						# jump to move_end
+		j		  move_Y						# jump to move_end
 
 move_R:
 		li        $t3, 0                        # $t3 = 0
