@@ -57,11 +57,11 @@ BOT_FREEZE_ACK              = 0xffff00e4
 ## Global Constants
 LOW_ALT_WARN				= 50
 SAFE_ALT					= 90
-LOW_ENERGY_WARN				= 300
+LOW_ENERGY_WARN				= 250
 WAIT_STATION_X		        = 100
 WAIT_STATION_Y				= 100
-CARRYING_CAPACITY     = 200
-ACCEPTABLE_STATION_DIFF  = 100
+CARRYING_CAPACITY     		= 256
+ACCEPTABLE_STATION_DIFF  	= 100
 ACCEPTABLE_STATION_X		 = 60
 
 # put your data things here
@@ -159,7 +159,7 @@ main:
 		lb 		$s1, 0($s1)
 		not 	$s1, $s1 							# $s1 = !have_dropped_off <-- will be true if we haven't dropped off yet
 		and 	$s0, $s0, $s1 						# If station_up AND we haven't dropped off yet, we should take care of that
-	 	bne 	$s0, 1, else5							# Check if station is up
+	 	bne 	$s0, 1, else2							# Check if station is up
 
 
 		# CHANGE else5 to else2 once we have else2 finished !!!!!!
