@@ -62,14 +62,15 @@ LOW_ENERGY_WARN				= 250
 WAIT_STATION_X		        = 100
 WAIT_STATION_Y				= 100
 CARRYING_CAPACITY     		= 256
-ACCEPTABLE_STATION_DIFF  	= 100
-ACCEPTABLE_STATION_X		= 60
-MEGA_REFUEL_NUM_TIMES		= 3
+ACCEPTABLE_STATION_DIFF  	= 175
+ACCEPTABLE_STATION_X		 = 75
+MEGA_REFUEL_NUM_TIMES			= 1
 
 # put your data things here
 .data
-puzzle_solution:       	.word   2       counts
-counts:         		.space  8
+puzzle_solution:       .word   2       counts
+counts:         .space  8
+mega_refuel:				.word  4
 
 .align 2
 	asteroid_map_address: 		.space 	1024
@@ -81,8 +82,8 @@ counts:         		.space  8
 	isFrozen:					.space 	1
 	puzzleReady:				.space 	1
 	fuel_requested:				.space  1
-	mega_refuel:				.space 	4
 	check_other_bot:			.space 	1
+
 
 .text
 main:
@@ -107,8 +108,9 @@ main:
 
 
 	else_begin:
-		lb 		$s0, isFrozen
-		bne 	$s0, 1, else_mega_refuel_start				# Check if we're frozen
+		la 		$s0, isFrozen
+		lb 		$s0, 0($s0)
+		bne 	$s0, 1, else_request_fuel_hold	# Check if we're frozen
 
 		jal 	unfreeze
 		sb 		$0, isFrozen						# State that we're not frozen anymore
@@ -117,12 +119,16 @@ main:
 
 	else_mega_refuel_start:
 
+			# Skip if below safe altitude
+			lw		$s0, BOT_X
+			li		$s1, SAFE_ALT
+			blt		$s0, $s1, else1
+
+
 			# if mega_refuel == 0 then skip mega refueling and go to regular
 			la 		$s0, mega_refuel
-			lb 		$s0, 0($s0)
+			lw 		$s0, 0($s0)
 			beq		$s0, $0, else_request_fuel_hold
-
-			add $s7, $s7, 1
 
 			jal   standby			# stay in standby if it is time to mega refuel
 
@@ -148,24 +154,30 @@ main:
 
 
 	else_mega_refuel_end:
+		la		$s6, mega_refuel		#
+		lw		$s6, 0($s6)		#
+		add		$s7, $s7, 1		#  =  +
 
-		# FIX THIS it only does it once 
 		# solve puzzle
 		move 	$a0, $0
 		jal 	solvePuzzle				# solve the puzzle to fuel up
 		sb		$0, fuel_requested
-		sb		$0, mega_refuel		#
+		sb		$0, puzzleReady		#
 
-		# la 		$s0, mega_refuel
-		# lw 		$s0, 0($s0)
-		# add		$s0, $s0, 1
-		# sb		$s0, mega_refuel
-		#
-		# # if (mega_refuel > MEGA_REFUEL_NUM_TIMES) { mega_refuel = 0}
-		# # else go back to the top
-		# li		$s1, MEGA_REFUEL_NUM_TIMES
-		# ble		$s0, $s1, else_begin
-		# sw		$0, mega_refuel		#
+		# only do it once cuz i can't fix code
+		#sw		$0, mega_refuel		#
+
+		# this code makes it do it multipile times
+		la 		$s0, mega_refuel
+		lw 		$s0, 0($s0)
+		add		$s0, $s0, 1
+		sb		$s0, mega_refuel
+
+		# if (mega_refuel > MEGA_REFUEL_NUM_TIMES) { mega_refuel = 0}
+		# else go back to the top
+		li		$s1, MEGA_REFUEL_NUM_TIMES
+		ble		$s0, $s1, else_begin
+		sw		$0, mega_refuel		#
 
 		j			else_begin
 
@@ -229,7 +241,7 @@ main:
 		li		$t6, ACCEPTABLE_STATION_DIFF
 
 		bgt		$t5, $t6, else2							# if botx - stationx > ACCEPTABLE_STATION_DIFF
-		
+
 		li		$s0, ACCEPTABLE_STATION_X				# if stationx < ACCEPTABLE_STATION_X
 		blt     $t1, $s0, else2							# then skip chasing
 
@@ -237,14 +249,14 @@ main:
 		bne     $t2, $t4, else1_cont          			# if station.y != bot.y then goSN
 		sw      $t0, DROPOFF_ASTEROID   				# now the bot should overlap the station
 
-		li		$s1, 1
-		sb		$s1, mega_refuel
-
-
 
 		li 		$s1, 1
 		la		$s0, have_dropped_off					# we are going to drop off asteroid
 		sb		$s1, 0($s0)								# raise the flag
+
+		# mega refuel after dropoff
+		li		$s1, 1
+		sw		$s1, mega_refuel
 
 		j		else1_end								# jump to else1_end
 
