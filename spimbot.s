@@ -165,23 +165,34 @@ main:
 		# CHANGE else5 to else2 once we have else2 finished !!!!!!
 
 		lw      $t0, STATION_LOC        			#
-    srl     $t1, $t0, 16            			# $t1 = STATION_LOC.x
-    and     $t2, $t0, 0x0000ffff    			# $t2 = STATION_LOC.y
-    lw      $t3, BOT_X              			# $t3 = BOT_X
-    lw      $t4, BOT_Y              			# $t4 = BOT_Y
+		srl     $t1, $t0, 16            			# $t1 = STATION_LOC.x
+		and     $t2, $t0, 0x0000ffff    			# $t2 = STATION_LOC.y
+		lw      $t3, BOT_X              			# $t3 = BOT_X
+		lw      $t4, BOT_Y              			# $t4 = BOT_Y
 
-		sub			$t5, $t3, $t1
-		li			$t6, ACCEPTABLE_STATION_DIFF
+		sub		$t5, $t3, $t1
+		li		$t6, ACCEPTABLE_STATION_DIFF
 
-		bgt			$t5, $t6, else2							# if botx - stationx > ACCEPTABLE_STATION_DIFF
-																				# then skip chasing
+		bgt		$t5, $t6, else2							# if botx - stationx > ACCEPTABLE_STATION_DIFF
+		move    $v0, $s2
+		lw      $ra, 0($sp)
+		lw      $s0, 4($sp)
+		lw      $s1, 8($sp)
+		lw      $s2, 12($sp)
+		lw      $s3, 16($sp)
+		lw      $s4, 20($sp)
+		lw      $s5, 24($sp)
+		lw      $s6, 28($sp)
+		lw      $s7, 32($sp)
+		add     $sp, $sp, 36
+		jr      $ra					# then skip chasing
 
-		li			$s0, ACCEPTABLE_STATION_X		# if stationx < ACCEPTABLE_STATION_X
+		li		$s0, ACCEPTABLE_STATION_X		# if stationx < ACCEPTABLE_STATION_X
 		blt     $t1, $s0, else2							# then skip chasing
 
-    bne     $t1, $t3, else1_cont          		# if station.x != bot.x then goEW
-    bne     $t2, $t4, else1_cont          		# if station.y != bot.y then goSN
-    sw      $t0, DROPOFF_ASTEROID   			# now the bot should overlap the station
+		bne     $t1, $t3, else1_cont          		# if station.x != bot.x then goEW
+		bne     $t2, $t4, else1_cont          		# if station.y != bot.y then goSN
+		sw      $t0, DROPOFF_ASTEROID   			# now the bot should overlap the station
 
 		li 		$s1, 1
 		la		$s0, have_dropped_off				# we are going to drop off asteroid
@@ -220,42 +231,15 @@ main:
 		##############################
 
 		j		else_begin
-
-	else3:
-	# If bot x is below altitude go to the right
-	# FIX THIS ITS BROKE
-		li 		$s0, LOW_ALT_WARN
-		lw 		$s1, BOT_X
-		blt 	$s0, $s1, else5						# Check if our altitude is too low and abort
-
-		# li      $a0, 0xfa0000
-		# lw 			$s1, BOT_Y									# (250, y)
-		# or			$a0, $a0, $s1
-		# jal			move_bot				# jump to move_bot and save position to $ra
-
-
-		# j				else_begin				# jump to else begin
-
-
-		# Note i'm skipping else4 cuz I moved it to the top
-
-		##############################
-		##  Correct altitutde here   #
-		##############################
-
-		# j 	else_begin
-
 	else5:
 		lw 		$s0, OTHER_BOT_X
 		slt 	$s0, 70
 		bne 	$s0, 1, else_done					# Check if the other bot is low enough to screw with them.
 
+		
+		jal 	solvePuzzle
 
-		##############################
-		##  Evil puzzle stuff here  		 #
-		##############################
-
-		# j 		else_begin
+		j 		else_begin
 
 	else_done:
 		jal     findNearest         				# findNearest
@@ -529,7 +513,7 @@ FN_end:
 # }
 
 solvePuzzle:
-    sub		$sp, $sp, 8						# Sub off our stack
+    	sub		$sp, $sp, 8						# Sub off our stack
 		sw 		$ra, 0($sp) 					# Protect the $ra
 		sw 		$t0, 4($sp) 					# Protect the $t0
 
@@ -541,9 +525,8 @@ solvePuzzle:
 
         jal     count_disjoint_regions
 
-		li 		$t1, 1
-		bne 	$a0, $t1, puzzle_continue		# If $a0 != 1 skip setting the throw bit
-		sw 		$a1, THROW_PUZZLE
+		beq 	$a0, $0, puzzle_continue		# If $a0 == 0 skip setting the throw bit
+		sw 		$a0, THROW_PUZZLE
 	puzzle_continue:
 		la 		$t0, puzzle_solution
 		lw 		$t0, 4($t0)
@@ -876,6 +859,11 @@ count_disjoint_regions:
         lw      $s6, 4($s0)     # s6 = lines->coords[0]
         lw      $s7, 8($s0)     # s7 = lines->coords[1]
 for_loop_cdr:
+		la 		$s3, isFrozen
+		lb 		$s3, 0($s3)
+		beq 	$s3, $0, cdr_frozen_skip
+		jr 		$ra
+	cdr_frozen_skip:
         bgeu    $s5, $s4, end_for_cdr
         mul     $t2, $s5, 4     # t2 = i*4
         add     $t3, $s6, $t2   # t3 = &lines->coords[0][i]
