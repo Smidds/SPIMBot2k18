@@ -99,7 +99,6 @@ main:
 
 	li      $s0, STATION_EXIT_INT_MASK        		
 	or      $s0, $s0, STATION_ENTER_INT_MASK  		
-	or      $s0, $s0, BONK_INT_MASK
 	or 		$s0, $s0, REQUEST_PUZZLE_INT_MASK
 	or 		$s0, $s0, BOT_FREEZE_INT_MASK
 	or 		$s0, $s0, TIMER_INT_MASK
@@ -108,11 +107,10 @@ main:
 
 
 	else_begin:
-		la 		$s0, isFrozen
-		lb 		$s0, 0($s0)
+		lb 		$s0, isFrozen
 		bne 	$s0, 1, else_mega_refuel_start				# Check if we're frozen
 
-		jal 	solvePuzzle
+		jal 	unfreeze
 		sb 		$0, isFrozen						# State that we're not frozen anymore
 
 		j 		else_begin
@@ -221,9 +219,6 @@ main:
 		and 	$s0, $s0, $s1 						# If station_up AND we haven't dropped off yet, we should take care of that
 	 	bne 	$s0, 1, else2							# Check if station is up
 
-
-		# CHANGE else5 to else2 once we have else2 finished !!!!!!
-
 		lw      $t0, STATION_LOC        			#
 		srl     $t1, $t0, 16            			# $t1 = STATION_LOC.x
 		and     $t2, $t0, 0x0000ffff    			# $t2 = STATION_LOC.y
@@ -263,17 +258,12 @@ main:
 		jal		move_bot				# jump to move and save position to $ra
 
     else1_end:
-
 	 	j		else_begin
-
-		add		$s5, $s5, 1
-
-	 	j		  else_done
 
 	else2:
 		la 		$s0, station_down
 		lb 		$s0, 0($s0)
-		bne 	$s0, 1, else_done						# Check if station is down
+		bne 	$s0, 1, else5						# Check if station is down
 
 		li		$a0, 0xfa0032						# $a0 = 0xfa00
 		jal		standby					# jump to standby and save position to $ra
@@ -288,7 +278,9 @@ main:
 		lw 		$s0, OTHER_BOT_X
 		slt 	$s0, OTHER_BOT_WARN
 		lb 		$s1, check_other_bot
-		and 	$s0, $s0, $s1						# $s0 = (other_bot_x < other_bot_warn && check_other_bot)
+		lb 		$s2, puzzleReady
+		and 	$s1, $s1, $s2 						# Check if puzzleReady AND check_other_bot
+		and 	$s0, $s0, $s1						# $s0 = (other_bot_x < other_bot_warn && check_other_bot && puzzleReady)
 		bne 	$s0, 1, else_done					# Check if the other bot is low enough and we haven't checked on them already to screw with them.
 
 		lw		$s0, TIMER							# read current time
@@ -618,6 +610,7 @@ solvePuzzle:
 		lw 		$t0, 4($t0)
 		sw 		$t0, SUBMIT_SOLUTION
 		sw 		$0, puzzle_solution				# Zero out our puzzle_solution struct
+		sb 		$0, puzzleReady
 
 		lw 		$ra, 0($sp) 					# Restore the $ra
 		lw 		$t0, 4($sp) 					# Restore the $t0
@@ -644,10 +637,6 @@ count_disjoint_regions:
         lw      $s6, 4($s0)     # s6 = lines->coords[0]
         lw      $s7, 8($s0)     # s7 = lines->coords[1]
 	for_loop_cdr:
-		lb 		$s3, isFrozen
-		beq 	$s3, $0, cdr_frozen_skip
-		jr 		$ra
-	cdr_frozen_skip:
         bgeu    $s5, $s4, end_for_cdr
         mul     $t2, $s5, 4     # t2 = i*4
         add     $t3, $s6, $t2   # t3 = &lines->coords[0][i]
@@ -1023,7 +1012,7 @@ chase_station:
   		j           interrupt_dispatch            		# jump to interrupt_dispatch
 
 frozen_int:
-		la 			$a1, puzzle_data
+		la 			$a1, thrown_puzzle_data
 		sw 			$a1, BOT_FREEZE_ACK					# Ack it, yo
 		li 			$a1, 1
 		sb 			$a1, isFrozen						# Set isFrozen to true
