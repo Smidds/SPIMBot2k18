@@ -66,8 +66,8 @@ ACCEPTABLE_STATION_X		 = 60
 
 # put your data things here
 .data
-puzzle_solution:       .word   2       counts
-counts:         .space  8
+puzzle_solution:       	.word   2       counts
+counts:         .		.space  8
 
 .align 2
 	asteroid_map_address: 		.space 	1024
@@ -79,6 +79,7 @@ counts:         .space  8
 	isFrozen:					.space 	1
 	puzzleReady:				.space 	1
 	fuel_requested:				.space  1
+	check_other_bot:			.space 	1
 
 .text
 main:
@@ -174,31 +175,19 @@ main:
 		li		$t6, ACCEPTABLE_STATION_DIFF
 
 		bgt		$t5, $t6, else2							# if botx - stationx > ACCEPTABLE_STATION_DIFF
-		move    $v0, $s2
-		lw      $ra, 0($sp)
-		lw      $s0, 4($sp)
-		lw      $s1, 8($sp)
-		lw      $s2, 12($sp)
-		lw      $s3, 16($sp)
-		lw      $s4, 20($sp)
-		lw      $s5, 24($sp)
-		lw      $s6, 28($sp)
-		lw      $s7, 32($sp)
-		add     $sp, $sp, 36
-		jr      $ra					# then skip chasing
-
-		li		$s0, ACCEPTABLE_STATION_X		# if stationx < ACCEPTABLE_STATION_X
+		
+		li		$s0, ACCEPTABLE_STATION_X				# if stationx < ACCEPTABLE_STATION_X
 		blt     $t1, $s0, else2							# then skip chasing
 
-		bne     $t1, $t3, else1_cont          		# if station.x != bot.x then goEW
-		bne     $t2, $t4, else1_cont          		# if station.y != bot.y then goSN
-		sw      $t0, DROPOFF_ASTEROID   			# now the bot should overlap the station
+		bne     $t1, $t3, else1_cont          			# if station.x != bot.x then goEW
+		bne     $t2, $t4, else1_cont          			# if station.y != bot.y then goSN
+		sw      $t0, DROPOFF_ASTEROID   				# now the bot should overlap the station
 
 		li 		$s1, 1
-		la		$s0, have_dropped_off				# we are going to drop off asteroid
-		sb		$s1, 0($s0)							# raise the flag
+		la		$s0, have_dropped_off					# we are going to drop off asteroid
+		sb		$s1, 0($s0)								# raise the flag
 
-		j		else1_end				# jump to else1_end
+		j		else1_end								# jump to else1_end
 
 	else1_cont:
 		# srl     $t1, $t0, 16            			# $t1 = STATION_LOC.x
