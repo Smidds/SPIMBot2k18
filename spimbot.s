@@ -610,10 +610,7 @@ solvePuzzle:
         la      $a2, puzzle_solution           	# s2 = solution
 
         jal     count_disjoint_regions
-		lb 		$t0, isFrozen
-		beq		$t0, $0, puzzle_skip_frozen
-		jr 		$ra
-	puzzle_skip_frozen:
+		
 		lw 		$a0, 8($sp)						# Restore the $a0
 		beq 	$a0, $0, puzzle_continue		# If $a0 == 0 skip setting the throw bit
 		sw 		$a0, THROW_PUZZLE
