@@ -98,8 +98,8 @@ main:
 	li 		$s0, 1
 	sb 		$s0, check_other_bot
 
-	li      $s0, STATION_EXIT_INT_MASK        		
-	or      $s0, $s0, STATION_ENTER_INT_MASK  		
+	li      $s0, STATION_EXIT_INT_MASK
+	or      $s0, $s0, STATION_ENTER_INT_MASK
 	or 		$s0, $s0, REQUEST_PUZZLE_INT_MASK
 	or 		$s0, $s0, BOT_FREEZE_INT_MASK
 	or 		$s0, $s0, TIMER_INT_MASK
@@ -216,6 +216,8 @@ main:
 		move 	$a0, $0
 		jal 	solvePuzzle				# solve the puzzle to fuel up
 		sb			$0, fuel_requested
+		sb			$0, puzzleReady		#
+
 
 
 		j 		else1
@@ -300,6 +302,10 @@ main:
 		sw		$s0, TIMER							# request timer interrupt in 5000 cycles
 		li 		$a0, 1								# Do evil puzzle, MUWAHAHAHAHAAAAA
 		jal 	solvePuzzle
+		sb		$0, puzzleReady
+		sb		$0, fuel_requested		# 
+				#
+
 		sb 		$0, check_other_bot 				# Set it check_other_bot to zero, as we have checked and should not check again
 													# until interrupted in the future
 
@@ -311,13 +317,12 @@ main:
 		lw      $s0, GET_CARGO       				# $s0 = cargo_amount
 		add     $s0, $s0, $v1        				# $s0 = cargo_amount + best_points
 		li      $s1, CARRYING_CAPACITY             				# $s1 = carrying capacity
-		bge     $s0, $s1, enable_int_station 		# if $s0 >= 128 then enable_int
+		bge     $s0, $s1, enable_int_station 		# if $s0 >= 256 then enable_int
 		# li      $s0, 0               				# $s0 = 0
 		# mtc0    $s0, $12             				# disable to global interrupt signal
 		move    $a0, $s2             				# $a0 = $s0
 		jal     move_bot                  			# chase
-
-    	sw      $s0, COLLECT_ASTEROID
+    sw      $s0, COLLECT_ASTEROID
 
     j       end                    				# jump to end
 
@@ -619,7 +624,7 @@ solvePuzzle:
 		lw 		$t0, 4($t0)
 		sw 		$t0, SUBMIT_SOLUTION
 		sw 		$0, puzzle_solution				# Zero out our puzzle_solution struct
-		sb 		$0, puzzleReady
+		# sb 		$0, puzzleReady
 
 		lw 		$ra, 0($sp) 					# Restore the $ra
 		lw 		$t0, 4($sp) 					# Restore the $t0
@@ -888,7 +893,7 @@ chase_station_extract:
 
 standby:
 		# Modified so that it takes $a0
-        li        	$t0, 10               				# $t0 = 10
+        li        	$t0, 2               				# $t0 = 10
         sw        	$t0, VELOCITY         				#
 
         # li          $t0, 0xfa0032           			# (150, 50)
@@ -898,7 +903,7 @@ standby:
         lw          $t3, BOT_X              			# $t3 = BOT_X
         lw          $t4, BOT_Y              			# $t4 = BOT_Y
         li          $t5, 290                			# $t5 = 290
-        bgt         $t1, $t5, sb_end        			# if station.x > 290 then
+        # bgt         $t1, $t5, sb_end        			# if station.x > 290 then
 
         bne         $t1, $t3, sb_goEW          			# if station.x != bot.x then goEW
         bne         $t2, $t4, sb_goSN          			# if station.y != bot.y then goSN
@@ -939,7 +944,7 @@ standby:
 	sb_loop:
         j         	sb_end             					# jump to chase_station
 	sb_end:
-        li        	$t0, 0        						# $t0 = 180
+        li        	$t0, 0        						# $t0 = 0
         sw        	$t0, ANGLE
         li        	$t0, 1        						# $t0 = 1
         sw        	$t0, ANGLE_CONTROL
