@@ -56,7 +56,7 @@ BOT_FREEZE_ACK              = 0xffff00e4
 
 ## Global Constants
 LOW_ALT_WARN				= 50
-OTHER_BOT_WARN 				= 70
+OTHER_BOT_WARN 				= 100
 SAFE_ALT					= 90
 LOW_ENERGY_WARN				= 250
 WAIT_STATION_X		        = 100
@@ -105,7 +105,6 @@ main:
 	or 		$s0, $s0, TIMER_INT_MASK
 	or      $s0, $s0, 1
 	mtc0    $s0, $12
-
 
 	else_begin:
 		la 		$s0, isFrozen
@@ -191,7 +190,7 @@ main:
 		la		$s0, have_dropped_off					# we are going to drop off asteroid
 		sb		$s1, 0($s0)								# raise the flag
 
-		j		else1_end								# jump to else1_end
+		j		else_begin								# jump to else1_end
 
 	else1_cont:
 		move 	$a0, $t0				# $a0 = $t0
@@ -206,13 +205,11 @@ main:
 		bne 	$s0, 1, else5						# Check if station is down
 
 		lw      $s0, GET_CARGO       				# $s0 = cargo_amount
-		add     $s0, $s0, $v1        				# $s0 = cargo_amount + best_points
 		li      $s1, CARRYING_CAPACITY             				# $s1 = carrying capacity
-		ble     $s0, $s1, else_done 		# if $s0 >= 256 then enable_int
+		ble     $s0, $s1, else5 		# if $s0 >= 256 then enable_int
 
 		li		$a0, 0xfa0032						# $a0 = 0xfa00
 		jal		standby					# jump to standby and save position to $ra
-		# j 			else_done
 
 		##############################
 		##  Do whatever we do here   #
@@ -221,7 +218,8 @@ main:
 		j		else_begin
 	else5:
 		lw 		$s0, OTHER_BOT_X
-		slt 	$s0, $s0, OTHER_BOT_WARN
+		li 		$s1, OTHER_BOT_WARN
+		slt 	$s0, $s0, $s1
 		lb 		$s1, check_other_bot
 		lb 		$s2, puzzleReady
 		and 	$s1, $s1, $s2 						# Check if puzzleReady AND check_other_bot
@@ -229,9 +227,8 @@ main:
 		bne 	$s0, 1, else_done					# Check if the other bot is low enough and we haven't checked on them already to screw with them.
 
 		lw		$s0, TIMER							# read current time
-		add		$s0, $s0, 5000						# add 5000 to current time
+		add		$s0, $s0, 300000						# add 5000 to current time
 		sw		$s0, TIMER							# request timer interrupt in 5000 cycles
-		li 		$a0, 1								# Do evil puzzle, MUWAHAHAHAHAAAAA
 		li        	$t0, 0        						# $t0 = 0
         sw        	$t0, ANGLE
         li        	$t0, 1        						# $t0 = 1
@@ -239,11 +236,10 @@ main:
 
         li        	$t0, 2        						# $t0 = 1
         sw        	$t0, VELOCITY
+		li 		$a0, 1								# Do evil puzzle, MUWAHAHAHAHAAAAA
 		jal 	solvePuzzle
 		sb		$0, puzzleReady
 		sb		$0, fuel_requested		#
-				#
-
 		sb 		$0, check_other_bot 				# Set it check_other_bot to zero, as we have checked and should not check again
 													# until interrupted in the future
 
@@ -961,13 +957,6 @@ enter_int:
 		li 			$a1, 1
 		sb 			$a1, station_up						# set station_up to true
         j           interrupt_dispatch           		# jump to interrupt_dispatch
-
-chase_station:
-		li	    	$a1, 1
-		sb	    	$a1, station_up						# Set station_up to true
-		li	    	$a1, 0
-		sb	    	$a1, station_down					# set station_down to false
-  		j           interrupt_dispatch            		# jump to interrupt_dispatch
 
 frozen_int:
 		la 			$a1, thrown_puzzle_data
