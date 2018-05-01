@@ -490,7 +490,7 @@ unfreeze:
 
 		la 		$t0, puzzle_solution
 		lw 		$t0, 4($t0)
-		sw 		$t0, SUBMIT_SOLUTION
+		sw 		$t0, UNFREEZE_BOT
 		sw 		$0, puzzle_solution				# Zero out our puzzle_solution struct
 
 		lw 		$ra, 0($sp) 					# Restore the $ra
