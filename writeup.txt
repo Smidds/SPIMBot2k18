@@ -1,0 +1,14 @@
+	We used a step-by-step process to build the spimbot. The first step was tackling the movement;
+we decided on using Leo's original spimbot code as a basis for our bot's movement.
+Originally, his bot's movement was within its own loop. We changed it so that each loop of the main
+equals at most one movement. We also changed it so that we "handled" interrupts outside of the
+interrupt handler. This change, coupled with the previous one, meant that we could easily loop through
+and check for interrupts in the main. This also meant that the code was very modular, and this helped
+with working together as a team (through github), since one person could work on one part of the code
+without messing up the work of another's.
+
+	So after the movement and modularity was added, we went about adding the additional features of the bot.
+This included: checking if the bot was frozen, checking our fuel levels and solving puzzles if we were too low,
+checking the other bot to see if they were in a position to be frozen, and the puzzle solving code.
+Our main strategy's aim is to collect as many asteroids as possible, drop them off at the station,
+fuel whenever is necessary, and freeze the enemy bot whenever they were below a certain threshold.
