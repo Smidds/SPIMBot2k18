@@ -116,71 +116,6 @@ main:
 		sb 		$0, isFrozen						# State that we're not frozen anymore
 
 		j 		else_begin
-
-	else_mega_refuel_start:
-
-			# Skip if below safe altitude
-			lw		$s0, BOT_X
-			li		$s1, SAFE_ALT
-			blt		$s0, $s1, else1
-
-
-			# if mega_refuel == 0 then skip mega refueling and go to regular
-			la 		$s0, mega_refuel
-			lw 		$s0, 0($s0)
-			beq		$s0, $0, else_request_fuel_hold
-
-			jal   standby			# stay in standby if it is time to mega refuel
-
-			# if puzzle is ready (and mega_refuel != 0) then go to else_mega_refuel_end
-			la		$s0, puzzleReady
-			lb		$s0, 0($s0)
-			beq		$s0, 1, else_mega_refuel_end
-
-			# if puzzle is not ready and mega_refuel is not zero, just keep looping until puzzle is ready
-			la		$s0, fuel_requested
-			lb		$s0, 0($s0)
-			beq		$s0, 1, else_begin
-
-			# if(mega_refuel != 0 && !puzzleReady && !fuel_requested)
-			# then request puzzle
-			la 		$s0, puzzle_data
-			sw		$s0, REQUEST_PUZZLE
-
-			li 		$s0, 1
-			sb		$s0, fuel_requested
-
-			j			else_begin
-
-
-	else_mega_refuel_end:
-		la		$s6, mega_refuel		#
-		lw		$s6, 0($s6)		#
-		add		$s7, $s7, 1		#  =  +
-
-		# solve puzzle
-		move 	$a0, $0
-		jal 	solvePuzzle				# solve the puzzle to fuel up
-		sb		$0, fuel_requested
-		sb		$0, puzzleReady		#
-
-		# only do it once cuz i can't fix code
-		#sw		$0, mega_refuel		#
-
-		# this code makes it do it multipile times
-		la 		$s0, mega_refuel
-		lw 		$s0, 0($s0)
-		add		$s0, $s0, 1
-		sb		$s0, mega_refuel
-
-		# if (mega_refuel > MEGA_REFUEL_NUM_TIMES) { mega_refuel = 0}
-		# else go back to the top
-		li		$s1, MEGA_REFUEL_NUM_TIMES
-		ble		$s0, $s1, else_begin
-		sw		$0, mega_refuel		#
-
-		j			else_begin
-
 	else_request_fuel_hold:
 		la		$s0, fuel_requested
 		lb		$s0, 0($s0)
@@ -190,9 +125,7 @@ main:
 		sw		$s0, REQUEST_PUZZLE
 
 		li 		$s0, 1
-		sb		$s0, fuel_requested		#
-
-
+		sb		$s0, fuel_requested	
 	else_get_fueled:
 		# checks if puzzle is ready and we need to refuel.
 		# we move to standby (250, bot.y) and solve puzzle
@@ -206,24 +139,26 @@ main:
 
 
 		blt 	$s0, $s1, else1						# Branch if energy is at a fine level
-																		# continue if energy is low
+													# continue if energy is low
 
-		#li      $a0, 0xfa0000
-		#lw 			$s1, BOT_Y									# (250, y)
-		#or			$a0, $a0, $s1
+		li      $a0, 0xfa0000
+		lw 			$s1, BOT_Y									# (250, y)
+		or			$a0, $a0, $s1
 		jal			standby				# jump to move_bot and save position to $ra
 
 		move 	$a0, $0
+		li        	$t0, 0        						# $t0 = 0
+        sw        	$t0, ANGLE
+        li        	$t0, 1        						# $t0 = 1
+        sw        	$t0, ANGLE_CONTROL
+
+        li        	$t0, 2        						# $t0 = 1
+        sw        	$t0, VELOCITY
 		jal 	solvePuzzle				# solve the puzzle to fuel up
-		sb			$0, fuel_requested
-		sb			$0, puzzleReady		#
-
-
+		sb		$0, fuel_requested
+		sb		$0, puzzleReady		#
 
 		j 		else1
-
-
-
 	else1:
 	 	la 		$s0, station_up
 		la 		$s1, have_dropped_off
@@ -256,18 +191,9 @@ main:
 		la		$s0, have_dropped_off					# we are going to drop off asteroid
 		sb		$s1, 0($s0)								# raise the flag
 
-		# mega refuel after dropoff
-		li		$s1, 1
-		sw		$s1, mega_refuel
-
 		j		else1_end								# jump to else1_end
 
 	else1_cont:
-		# srl     $t1, $t0, 16            			# $t1 = STATION_LOC.x
-		# lw      $t3, BOT_X              			# $t3 = BOT_X
-		# li		$t2, 0x								# $t2 = 0x
-
-		# slt		$t1,
 		move 	$a0, $t0				# $a0 = $t0
 		jal		move_bot				# jump to move and save position to $ra
 
@@ -279,9 +205,14 @@ main:
 		lb 		$s0, 0($s0)
 		bne 	$s0, 1, else5						# Check if station is down
 
+		lw      $s0, GET_CARGO       				# $s0 = cargo_amount
+		add     $s0, $s0, $v1        				# $s0 = cargo_amount + best_points
+		li      $s1, CARRYING_CAPACITY             				# $s1 = carrying capacity
+		ble     $s0, $s1, else_done 		# if $s0 >= 256 then enable_int
+
 		li		$a0, 0xfa0032						# $a0 = 0xfa00
 		jal		standby					# jump to standby and save position to $ra
-
+		# j 			else_done
 
 		##############################
 		##  Do whatever we do here   #
@@ -290,7 +221,7 @@ main:
 		j		else_begin
 	else5:
 		lw 		$s0, OTHER_BOT_X
-		slt 	$s0, OTHER_BOT_WARN
+		slt 	$s0, $s0, OTHER_BOT_WARN
 		lb 		$s1, check_other_bot
 		lb 		$s2, puzzleReady
 		and 	$s1, $s1, $s2 						# Check if puzzleReady AND check_other_bot
@@ -301,9 +232,16 @@ main:
 		add		$s0, $s0, 5000						# add 5000 to current time
 		sw		$s0, TIMER							# request timer interrupt in 5000 cycles
 		li 		$a0, 1								# Do evil puzzle, MUWAHAHAHAHAAAAA
+		li        	$t0, 0        						# $t0 = 0
+        sw        	$t0, ANGLE
+        li        	$t0, 1        						# $t0 = 1
+        sw        	$t0, ANGLE_CONTROL
+
+        li        	$t0, 2        						# $t0 = 1
+        sw        	$t0, VELOCITY
 		jal 	solvePuzzle
 		sb		$0, puzzleReady
-		sb		$0, fuel_requested		# 
+		sb		$0, fuel_requested		#
 				#
 
 		sb 		$0, check_other_bot 				# Set it check_other_bot to zero, as we have checked and should not check again
@@ -569,12 +507,18 @@ unfreeze:
 		move 	$a1, $t0
         add 	$a0, $t0, 16
         la      $a2, puzzle_solution           	# s2 = solution
+		li        	$t0, 0        						# $t0 = 0
+        sw        	$t0, ANGLE
+        li        	$t0, 1        						# $t0 = 1
+        sw        	$t0, ANGLE_CONTROL
 
+        li        	$t0, 2        						# $t0 = 1
+        sw        	$t0, VELOCITY
         jal     count_disjoint_regions
 
 		la 		$t0, puzzle_solution
 		lw 		$t0, 4($t0)
-		sw 		$t0, SUBMIT_SOLUTION
+		sw 		$t0, UNFREEZE_BOT
 		sw 		$0, puzzle_solution				# Zero out our puzzle_solution struct
 
 		lw 		$ra, 0($sp) 					# Restore the $ra
