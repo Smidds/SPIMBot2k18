@@ -141,9 +141,19 @@ main:
 		blt 	$s0, $s1, else1						# Branch if energy is at a fine level
 													# continue if energy is low
 
+		li      $a0, 0xfa0000
+		lw 			$s1, BOT_Y									# (250, y)
+		or			$a0, $a0, $s1
 		jal			standby				# jump to move_bot and save position to $ra
 
 		move 	$a0, $0
+		li        	$t0, 0        						# $t0 = 0
+        sw        	$t0, ANGLE
+        li        	$t0, 1        						# $t0 = 1
+        sw        	$t0, ANGLE_CONTROL
+
+        li        	$t0, 2        						# $t0 = 1
+        sw        	$t0, VELOCITY
 		jal 	solvePuzzle				# solve the puzzle to fuel up
 		sb		$0, fuel_requested
 		sb		$0, puzzleReady		#
@@ -195,9 +205,14 @@ main:
 		lb 		$s0, 0($s0)
 		bne 	$s0, 1, else5						# Check if station is down
 
+		lw      $s0, GET_CARGO       				# $s0 = cargo_amount
+		add     $s0, $s0, $v1        				# $s0 = cargo_amount + best_points
+		li      $s1, CARRYING_CAPACITY             				# $s1 = carrying capacity
+		ble     $s0, $s1, else_done 		# if $s0 >= 256 then enable_int
+
 		li		$a0, 0xfa0032						# $a0 = 0xfa00
 		jal		standby					# jump to standby and save position to $ra
-
+		# j 			else_done
 
 		##############################
 		##  Do whatever we do here   #
@@ -217,9 +232,16 @@ main:
 		add		$s0, $s0, 5000						# add 5000 to current time
 		sw		$s0, TIMER							# request timer interrupt in 5000 cycles
 		li 		$a0, 1								# Do evil puzzle, MUWAHAHAHAHAAAAA
+		li        	$t0, 0        						# $t0 = 0
+        sw        	$t0, ANGLE
+        li        	$t0, 1        						# $t0 = 1
+        sw        	$t0, ANGLE_CONTROL
+
+        li        	$t0, 2        						# $t0 = 1
+        sw        	$t0, VELOCITY
 		jal 	solvePuzzle
 		sb		$0, puzzleReady
-		sb		$0, fuel_requested		# 
+		sb		$0, fuel_requested		#
 				#
 
 		sb 		$0, check_other_bot 				# Set it check_other_bot to zero, as we have checked and should not check again
@@ -485,7 +507,13 @@ unfreeze:
 		move 	$a1, $t0
         add 	$a0, $t0, 16
         la      $a2, puzzle_solution           	# s2 = solution
+		li        	$t0, 0        						# $t0 = 0
+        sw        	$t0, ANGLE
+        li        	$t0, 1        						# $t0 = 1
+        sw        	$t0, ANGLE_CONTROL
 
+        li        	$t0, 2        						# $t0 = 1
+        sw        	$t0, VELOCITY
         jal     count_disjoint_regions
 
 		la 		$t0, puzzle_solution
