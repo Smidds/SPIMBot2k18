@@ -98,8 +98,8 @@ main:
 	li 		$s0, 1
 	sb 		$s0, check_other_bot
 
-	li      $s0, STATION_EXIT_INT_MASK        		
-	or      $s0, $s0, STATION_ENTER_INT_MASK  		
+	li      $s0, STATION_EXIT_INT_MASK
+	or      $s0, $s0, STATION_ENTER_INT_MASK
 	or 		$s0, $s0, REQUEST_PUZZLE_INT_MASK
 	or 		$s0, $s0, BOT_FREEZE_INT_MASK
 	or 		$s0, $s0, TIMER_INT_MASK
@@ -216,6 +216,8 @@ main:
 		move 	$a0, $0
 		jal 	solvePuzzle				# solve the puzzle to fuel up
 		sb			$0, fuel_requested
+		sb			$0, puzzleReady		#
+
 
 
 		j 		else1
@@ -300,6 +302,10 @@ main:
 		sw		$s0, TIMER							# request timer interrupt in 5000 cycles
 		li 		$a0, 1								# Do evil puzzle, MUWAHAHAHAHAAAAA
 		jal 	solvePuzzle
+		sb		$0, puzzleReady
+		sb		$0, fuel_requested		# 
+				#
+
 		sb 		$0, check_other_bot 				# Set it check_other_bot to zero, as we have checked and should not check again
 													# until interrupted in the future
 
@@ -316,8 +322,7 @@ main:
 		# mtc0    $s0, $12             				# disable to global interrupt signal
 		move    $a0, $s2             				# $a0 = $s0
 		jal     move_bot                  			# chase
-
-    	sw      $s0, COLLECT_ASTEROID
+    sw      $s0, COLLECT_ASTEROID
 
     j       end                    				# jump to end
 
@@ -622,7 +627,7 @@ solvePuzzle:
 		lw 		$t0, 4($t0)
 		sw 		$t0, SUBMIT_SOLUTION
 		sw 		$0, puzzle_solution				# Zero out our puzzle_solution struct
-		sb 		$0, puzzleReady
+		# sb 		$0, puzzleReady
 
 		lw 		$ra, 0($sp) 					# Restore the $ra
 		lw 		$t0, 4($sp) 					# Restore the $t0
