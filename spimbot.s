@@ -62,14 +62,15 @@ LOW_ENERGY_WARN				= 250
 WAIT_STATION_X		        = 100
 WAIT_STATION_Y				= 100
 CARRYING_CAPACITY     		= 256
-ACCEPTABLE_STATION_DIFF  	= 100
-ACCEPTABLE_STATION_X		= 60
-MEGA_REFUEL_NUM_TIMES		= 3
+ACCEPTABLE_STATION_DIFF  	= 175
+ACCEPTABLE_STATION_X		 = 75
+MEGA_REFUEL_NUM_TIMES			= 1
 
 # put your data things here
 .data
-puzzle_solution:       	.word   2       counts
-counts:         		.space  8
+puzzle_solution:       .word   2       counts
+counts:         .space  8
+mega_refuel:				.word  4
 
 .align 2
 	asteroid_map_address: 		.space 	1024
@@ -81,8 +82,8 @@ counts:         		.space  8
 	isFrozen:					.space 	1
 	puzzleReady:				.space 	1
 	fuel_requested:				.space  1
-	mega_refuel:				.space 	4
 	check_other_bot:			.space 	1
+
 
 .text
 main:
@@ -99,7 +100,6 @@ main:
 
 	li      $s0, STATION_EXIT_INT_MASK
 	or      $s0, $s0, STATION_ENTER_INT_MASK
-	# or      $s0, $s0, BONK_INT_MASK
 	or 		$s0, $s0, REQUEST_PUZZLE_INT_MASK
 	or 		$s0, $s0, BOT_FREEZE_INT_MASK
 	or 		$s0, $s0, TIMER_INT_MASK
@@ -110,21 +110,25 @@ main:
 	else_begin:
 		la 		$s0, isFrozen
 		lb 		$s0, 0($s0)
-		bne 	$s0, 1, else_mega_refuel_start				# Check if we're frozen
+		bne 	$s0, 1, else_request_fuel_hold	# Check if we're frozen
 
-		jal 	solvePuzzle
+		jal 	unfreeze
 		sb 		$0, isFrozen						# State that we're not frozen anymore
 
 		j 		else_begin
 
 	else_mega_refuel_start:
 
+			# Skip if below safe altitude
+			lw		$s0, BOT_X
+			li		$s1, SAFE_ALT
+			blt		$s0, $s1, else1
+
+
 			# if mega_refuel == 0 then skip mega refueling and go to regular
 			la 		$s0, mega_refuel
-			lb 		$s0, 0($s0)
+			lw 		$s0, 0($s0)
 			beq		$s0, $0, else_request_fuel_hold
-
-			add $s7, $s7, 1
 
 			jal   standby			# stay in standby if it is time to mega refuel
 
@@ -150,24 +154,30 @@ main:
 
 
 	else_mega_refuel_end:
+		la		$s6, mega_refuel		#
+		lw		$s6, 0($s6)		#
+		add		$s7, $s7, 1		#  =  +
 
-		# FIX THIS it only does it once
 		# solve puzzle
 		move 	$a0, $0
 		jal 	solvePuzzle				# solve the puzzle to fuel up
 		sb		$0, fuel_requested
-		sb		$0, mega_refuel		#
+		sb		$0, puzzleReady		#
 
-		# la 		$s0, mega_refuel
-		# lw 		$s0, 0($s0)
-		# add		$s0, $s0, 1
-		# sb		$s0, mega_refuel
-		#
-		# # if (mega_refuel > MEGA_REFUEL_NUM_TIMES) { mega_refuel = 0}
-		# # else go back to the top
-		# li		$s1, MEGA_REFUEL_NUM_TIMES
-		# ble		$s0, $s1, else_begin
-		# sw		$0, mega_refuel		#
+		# only do it once cuz i can't fix code
+		#sw		$0, mega_refuel		#
+
+		# this code makes it do it multipile times
+		la 		$s0, mega_refuel
+		lw 		$s0, 0($s0)
+		add		$s0, $s0, 1
+		sb		$s0, mega_refuel
+
+		# if (mega_refuel > MEGA_REFUEL_NUM_TIMES) { mega_refuel = 0}
+		# else go back to the top
+		li		$s1, MEGA_REFUEL_NUM_TIMES
+		ble		$s0, $s1, else_begin
+		sw		$0, mega_refuel		#
 
 		j			else_begin
 
@@ -206,6 +216,8 @@ main:
 		move 	$a0, $0
 		jal 	solvePuzzle				# solve the puzzle to fuel up
 		sb			$0, fuel_requested
+		sb			$0, puzzleReady		#
+
 
 
 		j 		else1
@@ -220,9 +232,6 @@ main:
 		not 	$s1, $s1 							# $s1 = !have_dropped_off <-- will be true if we haven't dropped off yet
 		and 	$s0, $s0, $s1 						# If station_up AND we haven't dropped off yet, we should take care of that
 	 	bne 	$s0, 1, else2							# Check if station is up
-
-
-		# CHANGE else5 to else2 once we have else2 finished !!!!!!
 
 		lw      $t0, STATION_LOC        			#
 		srl     $t1, $t0, 16            			# $t1 = STATION_LOC.x
@@ -242,14 +251,14 @@ main:
 		bne     $t2, $t4, else1_cont          			# if station.y != bot.y then goSN
 		sw      $t0, DROPOFF_ASTEROID   				# now the bot should overlap the station
 
-		li		$s1, 1
-		sb		$s1, mega_refuel
-
-
 
 		li 		$s1, 1
 		la		$s0, have_dropped_off					# we are going to drop off asteroid
 		sb		$s1, 0($s0)								# raise the flag
+
+		# mega refuel after dropoff
+		li		$s1, 1
+		sw		$s1, mega_refuel
 
 		j		else1_end								# jump to else1_end
 
@@ -263,17 +272,12 @@ main:
 		jal		move_bot				# jump to move and save position to $ra
 
     else1_end:
-
 	 	j		else_begin
-
-		add		$s5, $s5, 1
-
-	 	j		  else_done
 
 	else2:
 		la 		$s0, station_down
 		lb 		$s0, 0($s0)
-		bne 	$s0, 1, else_done						# Check if station is down
+		bne 	$s0, 1, else5						# Check if station is down
 
 		li		$a0, 0xfa0032						# $a0 = 0xfa00
 		jal		standby					# jump to standby and save position to $ra
@@ -288,7 +292,9 @@ main:
 		lw 		$s0, OTHER_BOT_X
 		slt 	$s0, OTHER_BOT_WARN
 		lb 		$s1, check_other_bot
-		and 	$s0, $s0, $s1						# $s0 = (other_bot_x < other_bot_warn && check_other_bot)
+		lb 		$s2, puzzleReady
+		and 	$s1, $s1, $s2 						# Check if puzzleReady AND check_other_bot
+		and 	$s0, $s0, $s1						# $s0 = (other_bot_x < other_bot_warn && check_other_bot && puzzleReady)
 		bne 	$s0, 1, else_done					# Check if the other bot is low enough and we haven't checked on them already to screw with them.
 
 		lw		$s0, TIMER							# read current time
@@ -296,6 +302,10 @@ main:
 		sw		$s0, TIMER							# request timer interrupt in 5000 cycles
 		li 		$a0, 1								# Do evil puzzle, MUWAHAHAHAHAAAAA
 		jal 	solvePuzzle
+		sb		$0, puzzleReady
+		sb		$0, fuel_requested		# 
+				#
+
 		sb 		$0, check_other_bot 				# Set it check_other_bot to zero, as we have checked and should not check again
 													# until interrupted in the future
 
@@ -312,10 +322,9 @@ main:
 		# mtc0    $s0, $12             				# disable to global interrupt signal
 		move    $a0, $s2             				# $a0 = $s0
 		jal     move_bot                  			# chase
+    sw      $s0, COLLECT_ASTEROID
 
-    	sw      $s0, COLLECT_ASTEROID
-
-    	j       end                    				# jump to end
+    j       end                    				# jump to end
 
 	enable_int_station:
 
@@ -618,6 +627,7 @@ solvePuzzle:
 		lw 		$t0, 4($t0)
 		sw 		$t0, SUBMIT_SOLUTION
 		sw 		$0, puzzle_solution				# Zero out our puzzle_solution struct
+		# sb 		$0, puzzleReady
 
 		lw 		$ra, 0($sp) 					# Restore the $ra
 		lw 		$t0, 4($sp) 					# Restore the $t0
@@ -644,10 +654,6 @@ count_disjoint_regions:
         lw      $s6, 4($s0)     # s6 = lines->coords[0]
         lw      $s7, 8($s0)     # s7 = lines->coords[1]
 	for_loop_cdr:
-		lb 		$s3, isFrozen
-		beq 	$s3, $0, cdr_frozen_skip
-		jr 		$ra
-	cdr_frozen_skip:
         bgeu    $s5, $s4, end_for_cdr
         mul     $t2, $s5, 4     # t2 = i*4
         add     $t3, $s6, $t2   # t3 = &lines->coords[0][i]
@@ -1023,7 +1029,7 @@ chase_station:
   		j           interrupt_dispatch            		# jump to interrupt_dispatch
 
 frozen_int:
-		la 			$a1, puzzle_data
+		la 			$a1, thrown_puzzle_data
 		sw 			$a1, BOT_FREEZE_ACK					# Ack it, yo
 		li 			$a1, 1
 		sb 			$a1, isFrozen						# Set isFrozen to true
